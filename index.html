@@ -1,0 +1,1840 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+    <link rel="manifest" href="/site.webmanifest">
+    <!-- PWA: manifest и цвет темы -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#6366f1">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Neuron Study | Neuron Ecosystem</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* Стили Neuron Ecosystem */
+        :root {
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --secondary: #8f94fb;
+            --bg: #0f0f23;
+            --card-bg: #1a1b2e;
+            --text: #ffffff;
+            --text-secondary: #a0a0c0;
+            --success: #10b981;
+            --accent: #00b4db;
+            --border: rgba(255,255,255,0.1);
+            --shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .particles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+        }
+
+        .container {
+            max-width: 100%;
+            padding: 0 15px;
+            margin: 0 auto;
+        }
+
+        /* Анимации */
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideInLeft {
+            from { transform: translateX(-100%); }
+            to { transform: translateX(0); }
+        }
+
+        @keyframes welcomeAnimation {
+            0% { opacity: 0; transform: scale(0.8); }
+            50% { opacity: 1; transform: scale(1.05); }
+            100% { opacity: 1; transform: scale(1); }
+        }
+
+        @keyframes welcomeDissolve {
+            0% { opacity: 1; transform: scale(1); filter: blur(0); }
+            100% { opacity: 0; transform: scale(1.2); filter: blur(10px); }
+        }
+
+        /* Экран приветствия */
+        .welcome-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            z-index: 1000;
+            animation: welcomeDissolve 1s ease-in-out forwards;
+            animation-delay: 3s;
+        }
+
+        .welcome-text {
+            font-size: 2rem;
+            font-weight: bold;
+            color: white;
+            text-align: center;
+            animation: welcomeAnimation 1.5s ease-out forwards;
+        }
+
+        /* Шапка */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            box-shadow: var(--shadow);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .menu-toggle {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+
+        .app-title {
+            font-size: 1.5rem;
+            font-weight: bold;
+            text-align: center;
+            flex-grow: 1;
+            margin-right: 40px;
+            background: linear-gradient(135deg, #fff, #e0e0e0);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .neuron-badge {
+            background: rgba(255,255,255,0.2);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        /* Боковое меню */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: -280px;
+            width: 280px;
+            height: 100%;
+            background: var(--card-bg);
+            box-shadow: var(--shadow);
+            z-index: 200;
+            transition: transform 0.3s ease;
+            padding-top: 70px;
+            border-right: 1px solid var(--border);
+        }
+
+        .sidebar.open {
+            transform: translateX(280px);
+        }
+
+        .sidebar-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            z-index: 199;
+            display: none;
+        }
+
+        .sidebar-overlay.open {
+            display: block;
+        }
+
+        .menu-item {
+            padding: 18px 25px;
+            border-bottom: 1px solid var(--border);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            font-weight: 500;
+        }
+
+        .menu-item:hover {
+            background: rgba(255,255,255,0.05);
+            border-left: 4px solid var(--primary);
+        }
+
+        .menu-item i {
+            font-size: 1.3rem;
+            width: 24px;
+            text-align: center;
+        }
+
+        /* Контент */
+        .content {
+            padding: 20px;
+            min-height: calc(100vh - 70px);
+        }
+
+        .section {
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .section.active {
+            display: block;
+        }
+
+        /* Карточки */
+        .card {
+            background: var(--card-bg);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border);
+        }
+
+        /* Расписание */
+        .schedule-day {
+            margin-bottom: 25px;
+        }
+
+        .day-title {
+            font-size: 1.3rem;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid var(--primary);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: var(--primary);
+            font-weight: 600;
+        }
+
+        .edit-schedule-btn {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+        }
+
+        .edit-schedule-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+        }
+
+        .schedule-item {
+            background: rgba(255,255,255,0.05);
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 12px;
+            border-left: 4px solid var(--primary);
+        }
+
+        .schedule-time {
+            font-weight: bold;
+            color: var(--primary);
+            font-size: 1.1rem;
+            margin-bottom: 5px;
+        }
+
+        /* Заметки и домашние задания */
+        .notes-list, .homework-list {
+            margin-bottom: 80px;
+        }
+
+        .note-item, .homework-item {
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 15px;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border);
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        .note-item:hover, .homework-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
+        }
+
+        .note-title, .homework-subject {
+            font-weight: bold;
+            margin-bottom: 8px;
+            color: var(--primary);
+            font-size: 1.1rem;
+        }
+
+        .note-content, .homework-task {
+            margin-bottom: 8px;
+            color: var(--text-secondary);
+            line-height: 1.5;
+        }
+
+        .homework-date {
+            font-size: 0.9rem;
+            color: var(--accent);
+            margin-bottom: 8px;
+        }
+
+        /* Кнопка статуса выполнения ДЗ */
+        .homework-status {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            background: rgba(255,255,255,0.1);
+            border: 2px solid var(--border);
+            transition: all 0.3s ease;
+        }
+
+        .homework-status:hover {
+            background: var(--primary);
+            transform: scale(1.1);
+        }
+
+        .homework-status-menu {
+            position: absolute;
+            top: 45px;
+            right: 0;
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            box-shadow: var(--shadow);
+            z-index: 10;
+            display: none;
+            flex-direction: column;
+            min-width: 150px;
+        }
+
+        .homework-status-option {
+            padding: 12px 15px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: background 0.2s;
+        }
+
+        .homework-status-option:hover {
+            background: rgba(255,255,255,0.05);
+        }
+
+        .homework-item.completed {
+            border-left: 4px solid var(--success);
+        }
+
+        .homework-item.completed .homework-status {
+            background: var(--success);
+            color: white;
+        }
+
+        .homework-item.not-completed {
+            border-left: 4px solid #ef4444;
+        }
+
+        .homework-item.not-completed .homework-status {
+            background: #ef4444;
+            color: white;
+        }
+
+        /* Кнопки добавления */
+        .add-btn {
+            position: fixed;
+            bottom: 25px;
+            right: 25px;
+            width: 65px;
+            height: 65px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 2.2rem;
+            box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);
+            cursor: pointer;
+            z-index: 90;
+            transition: all 0.3s ease;
+            border: none;
+        }
+
+        .add-btn:hover {
+            transform: translateY(-3px) scale(1.05);
+            box-shadow: 0 8px 25px rgba(99, 102, 241, 0.5);
+        }
+
+        .center-add-btn {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 2.5rem;
+            box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);
+            cursor: pointer;
+            z-index: 90;
+            transition: all 0.3s ease;
+            border: none;
+        }
+
+        .center-add-btn:hover {
+            transform: translate(-50%, -50%) scale(1.05);
+            box-shadow: 0 8px 25px rgba(99, 102, 241, 0.5);
+        }
+
+        /* Переводчик */
+        .translator-container {
+            display: flex;
+            flex-direction: column;
+            gap: 25px;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .translator-input {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .language-selectors {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .language-selector {
+            flex: 1;
+        }
+
+        .swap-languages {
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 45px;
+            height: 45px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+
+        .swap-languages:hover {
+            background: var(--primary-dark);
+            transform: rotate(180deg);
+        }
+
+        .translation-result {
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: 12px;
+            min-height: 120px;
+            border: 1px solid var(--border);
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        /* Формы */
+        .form-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            z-index: 300;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            backdrop-filter: blur(5px);
+        }
+
+        .form-overlay.open {
+            display: flex;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .form-container {
+            background: var(--card-bg);
+            width: 90%;
+            max-width: 500px;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: var(--shadow);
+            max-height: 90vh;
+            overflow-y: auto;
+            border: 1px solid var(--border);
+        }
+
+        .form-title {
+            font-size: 1.4rem;
+            margin-bottom: 25px;
+            text-align: center;
+            color: var(--primary);
+            font-weight: 600;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: var(--text);
+        }
+
+        .form-input, .form-textarea, .form-select {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: rgba(255,255,255,0.05);
+            color: var(--text);
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .form-input:focus, .form-textarea:focus, .form-select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+        }
+
+        .form-textarea {
+            min-height: 120px;
+            resize: vertical;
+        }
+
+        .schedule-item-form {
+            background: rgba(255,255,255,0.05);
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            border: 1px solid var(--border);
+        }
+
+        .form-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+            margin-top: 25px;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            font-size: 1rem;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+        }
+
+        .btn-secondary {
+            background: rgba(255,255,255,0.1);
+            color: var(--text);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255,255,255,0.15);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            color: white;
+        }
+
+        /* Контекстное меню */
+        .context-menu {
+            position: fixed;
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            box-shadow: var(--shadow);
+            z-index: 400;
+            display: none;
+            min-width: 160px;
+        }
+
+        .context-menu-item {
+            padding: 12px 18px;
+            cursor: pointer;
+            transition: background 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .context-menu-item:hover {
+            background: rgba(255,255,255,0.05);
+        }
+
+        /* Социальные кнопки */
+        .social-section {
+            margin-top: 30px;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .social-title {
+            color: var(--text-secondary);
+            font-size: 1rem;
+            margin-bottom: 15px;
+        }
+
+        .social-grid {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .social-button {
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            text-decoration: none;
+            border: 1px solid var(--border);
+            font-size: 1.2rem;
+        }
+
+        .social-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .telegram {
+            background: linear-gradient(135deg, #0088cc, #00aced);
+            color: white;
+        }
+
+        .web {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+        }
+
+        .email {
+            background: linear-gradient(135deg, #ea4335, #d14836);
+            color: white;
+        }
+
+        /* Адаптивность */
+        @media (max-width: 768px) {
+            .container {
+                padding: 0 10px;
+            }
+
+            .welcome-text {
+                font-size: 2.5rem;
+            }
+
+            .app-title {
+                font-size: 1.3rem;
+            }
+
+            .language-selectors {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .swap-languages {
+                transform: rotate(90deg);
+            }
+        }
+
+        @media (max-width: 480px) {
+            .form-container {
+                padding: 20px;
+            }
+
+            .form-actions {
+                flex-direction: column;
+            }
+
+            .btn {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="particles" id="particles"></div>
+
+    <!-- Экран приветствия -->
+    <div class="welcome-screen">
+        <div class="welcome-text" id="welcome-text">Neuron Study</div>
+    </div>
+
+    <!-- Шапка -->
+    <div class="header">
+        <button class="menu-toggle"><i class="fas fa-bars"></i></button>
+        <div class="app-title" id="app-title">Neuron Study</div>
+        <div class="neuron-badge">Neuron Ecosystem</div>
+    </div>
+
+    <!-- Боковое меню -->
+    <div class="sidebar-overlay"></div>
+    <div class="sidebar">
+        <div class="menu-item" data-section="schedule">
+            <i class="fas fa-calendar-alt"></i>
+            <span class="menu-text">Расписание</span>
+        </div>
+        <div class="menu-item" data-section="notes">
+            <i class="fas fa-sticky-note"></i>
+            <span class="menu-text">Заметки</span>
+        </div>
+        <div class="menu-item" data-section="homework">
+            <i class="fas fa-book"></i>
+            <span class="menu-text">Домашнее задание</span>
+        </div>
+        <div class="menu-item" data-section="translator">
+            <i class="fas fa-language"></i>
+            <span class="menu-text">Переводчик</span>
+        </div>
+        <div class="menu-item" data-section="settings">
+            <i class="fas fa-cog"></i>
+            <span class="menu-text">Настройки</span>
+        </div>
+
+        <!-- Социальные кнопки в меню -->
+        <div class="social-section">
+            <div class="social-title">Neuron Ecosystem</div>
+            <div class="social-grid">
+                <a href="https://t.me/neuron_ecosystem" class="social-button telegram" target="_blank">
+                    <i class="fab fa-telegram"></i>
+                </a>
+                <a href="https://neuron-p2p.ru" class="social-button web" target="_blank">
+                    <i class="fas fa-globe"></i>
+                </a>
+                <a href="#" class="social-button email" id="emailButton">
+                    <i class="fas fa-envelope"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Основной контент -->
+    <div class="container">
+        <div class="content">
+            <!-- Раздел расписания -->
+            <div class="section active" id="schedule-section">
+                <div class="schedule-day">
+                    <div class="day-title">
+                        <span>Понедельник</span>
+                        <button class="edit-schedule-btn" data-day="monday">
+                            <i class="fas fa-edit"></i> Редактировать
+                        </button>
+                    </div>
+                    <div id="monday-schedule">
+                        <!-- Расписание понедельника -->
+                    </div>
+                </div>
+                <div class="schedule-day">
+                    <div class="day-title">
+                        <span>Вторник</span>
+                        <button class="edit-schedule-btn" data-day="tuesday">
+                            <i class="fas fa-edit"></i> Редактировать
+                        </button>
+                    </div>
+                    <div id="tuesday-schedule">
+                        <!-- Расписание вторника -->
+                    </div>
+                </div>
+                <div class="schedule-day">
+                    <div class="day-title">
+                        <span>Среда</span>
+                        <button class="edit-schedule-btn" data-day="wednesday">
+                            <i class="fas fa-edit"></i> Редактировать
+                        </button>
+                    </div>
+                    <div id="wednesday-schedule">
+                        <!-- Расписание среды -->
+                    </div>
+                </div>
+                <div class="schedule-day">
+                    <div class="day-title">
+                        <span>Четверг</span>
+                        <button class="edit-schedule-btn" data-day="thursday">
+                            <i class="fas fa-edit"></i> Редактировать
+                        </button>
+                    </div>
+                    <div id="thursday-schedule">
+                        <!-- Расписание четверга -->
+                    </div>
+                </div>
+                <div class="schedule-day">
+                    <div class="day-title">
+                        <span>Пятница</span>
+                        <button class="edit-schedule-btn" data-day="friday">
+                            <i class="fas fa-edit"></i> Редактировать
+                        </button>
+                    </div>
+                    <div id="friday-schedule">
+                        <!-- Расписание пятницы -->
+                    </div>
+                </div>
+                <div class="schedule-day">
+                    <div class="day-title">
+                        <span>Суббота</span>
+                        <button class="edit-schedule-btn" data-day="saturday">
+                            <i class="fas fa-edit"></i> Редактировать
+                        </button>
+                    </div>
+                    <div id="saturday-schedule">
+                        <!-- Расписание субботы -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Раздел заметок -->
+            <div class="section" id="notes-section">
+                <div class="notes-list">
+                    <!-- Заметки будут добавляться здесь динамически -->
+                </div>
+                <div class="center-add-btn" id="add-note-btn">
+                    <i class="fas fa-plus"></i>
+                </div>
+                <div class="add-btn" id="add-note-btn-bottom" style="display: none;">
+                    <i class="fas fa-plus"></i>
+                </div>
+            </div>
+
+            <!-- Раздел домашних заданий -->
+            <div class="section" id="homework-section">
+                <div class="homework-list">
+                    <!-- Домашние задания будут добавляться здесь динамически -->
+                </div>
+                <div class="center-add-btn" id="add-homework-btn">
+                    <i class="fas fa-plus"></i>
+                </div>
+                <div class="add-btn" id="add-homework-btn-bottom" style="display: none;">
+                    <i class="fas fa-plus"></i>
+                </div>
+            </div>
+
+            <!-- Раздел переводчика -->
+            <div class="section" id="translator-section">
+                <div class="translator-container">
+                    <div class="translator-input">
+                        <div class="language-selectors">
+                            <div class="language-selector">
+                                <label class="form-label">Исходный язык</label>
+                                <select class="form-select" id="source-lang">
+                                    <option value="ru">Русский</option>
+                                    <option value="en">Английский</option>
+                                    <option value="es">Испанский</option>
+                                    <option value="fr">Французский</option>
+                                    <option value="de">Немецкий</option>
+                                    <option value="zh">Китайский</option>
+                                    <option value="ja">Японский</option>
+                                </select>
+                            </div>
+                            <button class="swap-languages" id="swap-languages">
+                                <i class="fas fa-exchange-alt"></i>
+                            </button>
+                            <div class="language-selector">
+                                <label class="form-label">Целевой язык</label>
+                                <select class="form-select" id="target-lang">
+                                    <option value="en">Английский</option>
+                                    <option value="ru">Русский</option>
+                                    <option value="es">Испанский</option>
+                                    <option value="fr">Французский</option>
+                                    <option value="de">Немецкий</option>
+                                    <option value="zh">Китайский</option>
+                                    <option value="ja">Японский</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Текст для перевода</label>
+                            <textarea class="form-textarea" id="text-to-translate" placeholder="Введите текст для перевода..."></textarea>
+                        </div>
+                        <button class="btn btn-primary" id="translate-btn">
+                            <i class="fas fa-language"></i> Перевести
+                        </button>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Результат перевода</label>
+                        <div class="translation-result" id="translation-result">
+                            Перевод появится здесь...
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Раздел настроек -->
+            <div class="section" id="settings-section">
+                <div class="card">
+                    <div class="form-title">О приложении</div>
+                    <div class="about-content">
+                        <p><strong>Neuron Study</strong> - это умное приложение для студентов, созданное в рамках Neuron Ecosystem.</p>
+                        <p>Функции:</p>
+                        <ul style="margin-left: 20px; margin-top: 10px;">
+                            <li>📅 Управление расписанием</li>
+                            <li>📝 Умные заметки</li>
+                            <li>📚 Трекер домашних заданий</li>
+                            <li>🌐 Встроенный переводчик</li>
+                        </ul>
+                        <p style="margin-top: 15px;">Все данные хранятся локально на вашем устройстве.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Форма добавления заметки -->
+    <div class="form-overlay" id="note-form-overlay">
+        <div class="form-container">
+            <div class="form-title">Добавить заметку</div>
+            <div class="form-group">
+                <label class="form-label">Заголовок</label>
+                <input type="text" class="form-input" id="note-title-input" placeholder="Введите заголовок...">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Текст заметки</label>
+                <textarea class="form-textarea" id="note-content-input" placeholder="Введите текст заметки..."></textarea>
+            </div>
+            <div class="form-actions">
+                <button class="btn btn-secondary" id="cancel-note-btn">Отмена</button>
+                <button class="btn btn-primary" id="save-note-btn">Сохранить</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Форма добавления домашнего задания -->
+    <div class="form-overlay" id="homework-form-overlay">
+        <div class="form-container">
+            <div class="form-title">Добавить домашнее задание</div>
+            <div class="form-group">
+                <label class="form-label">Дата выполнения</label>
+                <input type="date" class="form-input" id="homework-date-input">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Предмет</label>
+                <input type="text" class="form-input" id="homework-subject-input" placeholder="Например: Математика">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Задание</label>
+                <textarea class="form-textarea" id="homework-task-input" placeholder="Опишите задание..."></textarea>
+            </div>
+            <div class="form-actions">
+                <button class="btn btn-secondary" id="cancel-homework-btn">Отмена</button>
+                <button class="btn btn-primary" id="save-homework-btn">Сохранить</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Форма редактирования расписания -->
+    <div class="form-overlay" id="schedule-form-overlay">
+        <div class="form-container">
+            <div class="form-title" id="schedule-form-title">Редактировать расписание</div>
+            <div id="schedule-items-container">
+                <!-- Элементы расписания будут добавляться здесь динамически -->
+            </div>
+            <button class="btn btn-primary" id="add-schedule-item-btn">
+                <i class="fas fa-plus"></i> Добавить предмет
+            </button>
+            <div class="form-actions">
+                <button class="btn btn-secondary" id="cancel-schedule-btn">Отмена</button>
+                <button class="btn btn-primary" id="save-schedule-btn">Сохранить</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Контекстное меню -->
+    <div class="context-menu" id="context-menu">
+        <div class="context-menu-item" data-action="edit">
+            <i class="fas fa-edit"></i> Редактировать
+        </div>
+        <div class="context-menu-item" data-action="delete">
+            <i class="fas fa-trash"></i> Удалить
+        </div>
+    </div>
+
+    <!-- Уведомление о копировании -->
+    <div class="copy-notification" id="copy-notification" style="display: none; position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); background: linear-gradient(135deg, var(--primary), var(--secondary)); color: white; padding: 12px 20px; border-radius: 10px; z-index: 1000; box-shadow: var(--shadow); font-weight: 600;">
+        Email скопирован!
+    </div>
+
+    <script>
+        // Частицы для фона
+        function createParticles() {
+            const particles = document.getElementById('particles');
+            for (let i = 0; i < 50; i++) {
+                const particle = document.createElement('div');
+                particle.style.cssText = `
+                    position: absolute;
+                    width: 2px;
+                    height: 2px;
+                    background: var(--primary);
+                    border-radius: 50%;
+                    left: ${Math.random() * 100}%;
+                    top: ${Math.random() * 100}%;
+                    animation: floatParticle ${10 + Math.random() * 20}s linear infinite;
+                `;
+                particles.appendChild(particle);
+            }
+        }
+
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes floatParticle {
+                0% { transform: translate(0, 0) rotate(0deg); opacity: 0; }
+                10% { opacity: 1; }
+                90% { opacity: 1; }
+                100% { transform: translate(${Math.random() * 200 - 100}px, ${Math.random() * 200 - 100}px) rotate(360deg); opacity: 0; }
+            }
+        `;
+        document.head.appendChild(style);
+
+        // Данные приложения
+        let appData = {
+            notes: [],
+            homework: [],
+            schedule: {
+                monday: [],
+                tuesday: [],
+                wednesday: [],
+                thursday: [],
+                friday: [],
+                saturday: []
+            },
+            settings: {
+                theme: 'dark'
+            }
+        };
+
+        // Элементы DOM
+        const welcomeScreen = document.querySelector('.welcome-screen');
+        const menuToggle = document.querySelector('.menu-toggle');
+        const sidebar = document.querySelector('.sidebar');
+        const sidebarOverlay = document.querySelector('.sidebar-overlay');
+        const menuItems = document.querySelectorAll('.menu-item');
+        const sections = document.querySelectorAll('.section');
+        
+        const notesList = document.querySelector('.notes-list');
+        const addNoteBtn = document.querySelector('#add-note-btn');
+        const addNoteBtnBottom = document.querySelector('#add-note-btn-bottom');
+        const noteFormOverlay = document.querySelector('#note-form-overlay');
+        const cancelNoteBtn = document.querySelector('#cancel-note-btn');
+        const saveNoteBtn = document.querySelector('#save-note-btn');
+        const noteTitleInput = document.querySelector('#note-title-input');
+        const noteContentInput = document.querySelector('#note-content-input');
+        
+        const homeworkList = document.querySelector('.homework-list');
+        const addHomeworkBtn = document.querySelector('#add-homework-btn');
+        const addHomeworkBtnBottom = document.querySelector('#add-homework-btn-bottom');
+        const homeworkFormOverlay = document.querySelector('#homework-form-overlay');
+        const cancelHomeworkBtn = document.querySelector('#cancel-homework-btn');
+        const saveHomeworkBtn = document.querySelector('#save-homework-btn');
+        const homeworkDateInput = document.querySelector('#homework-date-input');
+        const homeworkSubjectInput = document.querySelector('#homework-subject-input');
+        const homeworkTaskInput = document.querySelector('#homework-task-input');
+        
+        const scheduleFormOverlay = document.querySelector('#schedule-form-overlay');
+        const scheduleFormTitle = document.querySelector('#schedule-form-title');
+        const scheduleItemsContainer = document.querySelector('#schedule-items-container');
+        const addScheduleItemBtn = document.querySelector('#add-schedule-item-btn');
+        const cancelScheduleBtn = document.querySelector('#cancel-schedule-btn');
+        const saveScheduleBtn = document.querySelector('#save-schedule-btn');
+        const editScheduleBtns = document.querySelectorAll('.edit-schedule-btn');
+        
+        const sourceLangSelect = document.querySelector('#source-lang');
+        const targetLangSelect = document.querySelector('#target-lang');
+        const swapLanguagesBtn = document.querySelector('#swap-languages');
+        const textToTranslate = document.querySelector('#text-to-translate');
+        const translateBtn = document.querySelector('#translate-btn');
+        const translationResult = document.querySelector('#translation-result');
+        
+        const emailButton = document.querySelector('#emailButton');
+        const copyNotification = document.querySelector('#copy-notification');
+        
+        const contextMenu = document.querySelector('#context-menu');
+        
+        let currentContextItem = null;
+        let currentContextType = null;
+        let currentEditingDay = null;
+
+        // Инициализация приложения
+        function initApp() {
+            // Загрузка данных из localStorage
+            loadData();
+            
+            // Применение настроек
+            applySettings();
+            
+            // Показать соответствующий раздел
+            showSection('schedule');
+            
+            // Отображение данных
+            renderNotes();
+            renderHomework();
+            renderSchedule();
+            
+            // Установка текущей даты в поле ввода даты ДЗ
+            homeworkDateInput.valueAsDate = new Date();
+            
+            // Назначение обработчиков событий
+            setupEventListeners();
+            
+            // Создание частиц
+            createParticles();
+            
+            // Скрытие экрана приветствия после 4 секунд
+            setTimeout(() => {
+                welcomeScreen.style.display = 'none';
+            }, 4000);
+        }
+
+        // Загрузка данных из localStorage
+        function loadData() {
+            const savedData = localStorage.getItem('neuronStudyData');
+            if (savedData) {
+                appData = JSON.parse(savedData);
+            }
+        }
+
+        // Сохранение данных в localStorage
+        function saveData() {
+            localStorage.setItem('neuronStudyData', JSON.stringify(appData));
+        }
+
+        // Применение настроек (тема)
+        function applySettings() {
+            // Применение темы
+            document.body.setAttribute('data-theme', appData.settings.theme);
+        }
+
+        // Показать раздел
+        function showSection(sectionId) {
+            sections.forEach(section => {
+                section.classList.remove('active');
+            });
+            
+            document.getElementById(`${sectionId}-section`).classList.add('active');
+            
+            // Скрытие/показ кнопок добавления
+            if (sectionId === 'notes') {
+                addNoteBtn.style.display = appData.notes.length === 0 ? 'block' : 'none';
+                addNoteBtnBottom.style.display = appData.notes.length === 0 ? 'none' : 'block';
+            } else {
+                addNoteBtn.style.display = 'none';
+                addNoteBtnBottom.style.display = 'none';
+            }
+            
+            if (sectionId === 'homework') {
+                addHomeworkBtn.style.display = appData.homework.length === 0 ? 'block' : 'none';
+                addHomeworkBtnBottom.style.display = appData.homework.length === 0 ? 'none' : 'block';
+            } else {
+                addHomeworkBtn.style.display = 'none';
+                addHomeworkBtnBottom.style.display = 'none';
+            }
+        }
+
+        // Отображение заметок
+        function renderNotes() {
+            notesList.innerHTML = '';
+            
+            if (appData.notes.length === 0) {
+                const emptyState = document.createElement('div');
+                emptyState.className = 'card';
+                emptyState.innerHTML = `
+                    <div style="text-align: center; padding: 40px 20px; color: var(--text-secondary);">
+                        <i class="fas fa-sticky-note" style="font-size: 3rem; margin-bottom: 15px; opacity: 0.5;"></i>
+                        <div style="font-size: 1.1rem;">Заметок пока нет</div>
+                        <div style="margin-top: 10px; font-size: 0.9rem;">Нажмите на кнопку "+" чтобы добавить первую заметку</div>
+                    </div>
+                `;
+                notesList.appendChild(emptyState);
+                return;
+            }
+            
+            appData.notes.forEach((note, index) => {
+                const noteElement = document.createElement('div');
+                noteElement.className = 'note-item';
+                noteElement.dataset.index = index;
+                
+                noteElement.innerHTML = `
+                    <div class="note-title">${note.title}</div>
+                    <div class="note-content">${note.content}</div>
+                `;
+                
+                // Добавление обработчика долгого нажатия
+                noteElement.addEventListener('contextmenu', (e) => {
+                    e.preventDefault();
+                    showContextMenu(e, index, 'note');
+                });
+                
+                notesList.appendChild(noteElement);
+            });
+            
+            // Обновление видимости кнопок добавления
+            if (document.getElementById('notes-section').classList.contains('active')) {
+                addNoteBtn.style.display = appData.notes.length === 0 ? 'block' : 'none';
+                addNoteBtnBottom.style.display = appData.notes.length === 0 ? 'none' : 'block';
+            }
+        }
+
+        // Отображение домашних заданий
+        function renderHomework() {
+            homeworkList.innerHTML = '';
+            
+            if (appData.homework.length === 0) {
+                const emptyState = document.createElement('div');
+                emptyState.className = 'card';
+                emptyState.innerHTML = `
+                    <div style="text-align: center; padding: 40px 20px; color: var(--text-secondary);">
+                        <i class="fas fa-book" style="font-size: 3rem; margin-bottom: 15px; opacity: 0.5;"></i>
+                        <div style="font-size: 1.1rem;">Домашних заданий пока нет</div>
+                        <div style="margin-top: 10px; font-size: 0.9rem;">Нажмите на кнопку "+" чтобы добавить первое задание</div>
+                    </div>
+                `;
+                homeworkList.appendChild(emptyState);
+                return;
+            }
+            
+            // Сортировка ДЗ по дате
+            const sortedHomework = [...appData.homework].sort((a, b) => new Date(a.date) - new Date(b.date));
+            
+            sortedHomework.forEach((hw, index) => {
+                const hwElement = document.createElement('div');
+                hwElement.className = `homework-item ${hw.completed ? 'completed' : hw.completed === false ? 'not-completed' : ''}`;
+                hwElement.dataset.index = appData.homework.indexOf(hw);
+                
+                const date = new Date(hw.date);
+                const formattedDate = date.toLocaleDateString('ru-RU', {
+                    day: 'numeric',
+                    month: 'long'
+                });
+                
+                hwElement.innerHTML = `
+                    <div class="homework-date">${formattedDate}</div>
+                    <div class="homework-subject">${hw.subject}</div>
+                    <div class="homework-task">${hw.task}</div>
+                    <div class="homework-status">${hw.completed ? '✓' : hw.completed === false ? '✗' : '?'}</div>
+                    <div class="homework-status-menu">
+                        <div class="homework-status-option" data-status="completed">
+                            <i class="fas fa-check"></i> Выполнено
+                        </div>
+                        <div class="homework-status-option" data-status="not-completed">
+                            <i class="fas fa-times"></i> Не выполнено
+                        </div>
+                    </div>
+                `;
+                
+                // Добавление обработчиков для статуса
+                const statusBtn = hwElement.querySelector('.homework-status');
+                const statusMenu = hwElement.querySelector('.homework-status-menu');
+                
+                statusBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    statusMenu.style.display = statusMenu.style.display === 'flex' ? 'none' : 'flex';
+                });
+                
+                hwElement.querySelectorAll('.homework-status-option').forEach(option => {
+                    option.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        const status = option.dataset.status;
+                        const hwIndex = appData.homework.indexOf(hw);
+                        
+                        if (status === 'completed') {
+                            appData.homework[hwIndex].completed = true;
+                        } else {
+                            appData.homework[hwIndex].completed = false;
+                        }
+                        
+                        saveData();
+                        renderHomework();
+                    });
+                });
+                
+                // Добавление обработчика долгого нажатия
+                hwElement.addEventListener('contextmenu', (e) => {
+                    e.preventDefault();
+                    showContextMenu(e, appData.homework.indexOf(hw), 'homework');
+                });
+                
+                homeworkList.appendChild(hwElement);
+            });
+            
+            // Обновление видимости кнопок добавления
+            if (document.getElementById('homework-section').classList.contains('active')) {
+                addHomeworkBtn.style.display = appData.homework.length === 0 ? 'block' : 'none';
+                addHomeworkBtnBottom.style.display = appData.homework.length === 0 ? 'none' : 'block';
+            }
+        }
+
+        // Отображение расписания
+        function renderSchedule() {
+            const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+            
+            days.forEach(day => {
+                const dayContainer = document.getElementById(`${day}-schedule`);
+                dayContainer.innerHTML = '';
+                
+                if (appData.schedule[day].length === 0) {
+                    const emptyState = document.createElement('div');
+                    emptyState.className = 'card';
+                    emptyState.innerHTML = `
+                        <div style="text-align: center; padding: 30px 20px; color: var(--text-secondary);">
+                            <i class="fas fa-calendar" style="font-size: 2.5rem; margin-bottom: 10px; opacity: 0.5;"></i>
+                            <div>Расписание не заполнено</div>
+                        </div>
+                    `;
+                    dayContainer.appendChild(emptyState);
+                    return;
+                }
+                
+                // Сортировка расписания по времени
+                const sortedSchedule = [...appData.schedule[day]].sort((a, b) => {
+                    const timeA = a.time.split(':').map(Number);
+                    const timeB = b.time.split(':').map(Number);
+                    return timeA[0] * 60 + timeA[1] - (timeB[0] * 60 + timeB[1]);
+                });
+                
+                sortedSchedule.forEach((item, index) => {
+                    const scheduleElement = document.createElement('div');
+                    scheduleElement.className = 'schedule-item';
+                    scheduleElement.dataset.index = index;
+                    
+                    scheduleElement.innerHTML = `
+                        <div class="schedule-time">${item.time}</div>
+                        <div class="schedule-subject">${item.subject}</div>
+                    `;
+                    
+                    dayContainer.appendChild(scheduleElement);
+                });
+            });
+        }
+
+        // Показать форму редактирования расписания
+        function showScheduleForm(day) {
+            currentEditingDay = day;
+            scheduleFormTitle.textContent = `Редактировать расписание - ${getDayName(day)}`;
+            
+            // Очистка контейнера
+            scheduleItemsContainer.innerHTML = '';
+            
+            // Добавление существующих элементов расписания
+            if (appData.schedule[day] && appData.schedule[day].length > 0) {
+                appData.schedule[day].forEach((item, index) => {
+                    addScheduleItemToForm(item.time, item.subject, index);
+                });
+            } else {
+                // Добавление пустого элемента по умолчанию
+                addScheduleItemToForm('', '');
+            }
+            
+            // Показать форму
+            scheduleFormOverlay.classList.add('open');
+        }
+
+        // Получить название дня недели
+        function getDayName(day) {
+            const days = {
+                'monday': 'Понедельник',
+                'tuesday': 'Вторник',
+                'wednesday': 'Среда',
+                'thursday': 'Четверг',
+                'friday': 'Пятница',
+                'saturday': 'Суббота'
+            };
+            return days[day] || day;
+        }
+
+        // Добавить элемент расписания в форму
+        function addScheduleItemToForm(time = '', subject = '', index = null) {
+            const itemElement = document.createElement('div');
+            itemElement.className = 'schedule-item-form';
+            if (index !== null) itemElement.dataset.index = index;
+            
+            itemElement.innerHTML = `
+                <div class="form-group">
+                    <label class="form-label">Время</label>
+                    <input type="time" class="form-input schedule-time-input" value="${time}">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Предмет</label>
+                    <input type="text" class="form-input schedule-subject-input" value="${subject}" placeholder="Название предмета">
+                </div>
+                <button type="button" class="btn btn-danger remove-schedule-item-btn">
+                    <i class="fas fa-trash"></i> Удалить
+                </button>
+            `;
+            
+            // Добавление обработчика для кнопки удаления
+            const removeBtn = itemElement.querySelector('.remove-schedule-item-btn');
+            removeBtn.addEventListener('click', () => {
+                itemElement.remove();
+            });
+            
+            scheduleItemsContainer.appendChild(itemElement);
+        }
+
+        // Сохранение расписания
+        function saveSchedule() {
+            if (!currentEditingDay) return;
+            
+            const scheduleItems = [];
+            const itemElements = scheduleItemsContainer.querySelectorAll('.schedule-item-form');
+            
+            itemElements.forEach(itemElement => {
+                const timeInput = itemElement.querySelector('.schedule-time-input');
+                const subjectInput = itemElement.querySelector('.schedule-subject-input');
+                
+                if (timeInput.value && subjectInput.value) {
+                    scheduleItems.push({
+                        time: timeInput.value,
+                        subject: subjectInput.value
+                    });
+                }
+            });
+            
+            appData.schedule[currentEditingDay] = scheduleItems;
+            saveData();
+            renderSchedule();
+            scheduleFormOverlay.classList.remove('open');
+        }
+
+        // Функция перевода текста с использованием Yandex Translate API
+        async function translateText(text, sourceLang, targetLang) {
+            if (!text.trim()) {
+                return 'Введите текст для перевода';
+            }
+
+            // Используем бесплатный API MyMemory
+            const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${sourceLang}|${targetLang}`;
+            
+            try {
+                const response = await fetch(url);
+                const data = await response.json();
+                
+                if (data.responseStatus === 200) {
+                    return data.responseData.translatedText;
+                } else {
+                    return 'Ошибка перевода. Попробуйте еще раз.';
+                }
+            } catch (error) {
+                console.error('Translation error:', error);
+                
+                // Fallback: простой словарь для демонстрации
+                const dictionary = {
+                    'ru-en': {
+                        'привет': 'hello',
+                        'мир': 'world',
+                        'добро пожаловать': 'welcome',
+                        'расписание': 'schedule',
+                        'заметки': 'notes',
+                        'домашнее задание': 'homework',
+                        'переводчик': 'translator',
+                        'настройки': 'settings',
+                        'учёба': 'study',
+                        'студент': 'student'
+                    },
+                    'en-ru': {
+                        'hello': 'привет',
+                        'world': 'мир',
+                        'welcome': 'добро пожаловать',
+                        'schedule': 'расписание',
+                        'notes': 'заметки',
+                        'homework': 'домашнее задание',
+                        'translator': 'переводчик',
+                        'settings': 'настройки',
+                        'study': 'учёба',
+                        'student': 'студент'
+                    }
+                };
+                
+                const key = `${sourceLang}-${targetLang}`;
+                const translated = dictionary[key]?.[text.toLowerCase()];
+                
+                return translated || 'Перевод не найден. Попробуйте другой текст.';
+            }
+        }
+
+        // Показать контекстное меню
+        function showContextMenu(event, index, type) {
+            currentContextItem = index;
+            currentContextType = type;
+            
+            contextMenu.style.display = 'block';
+            contextMenu.style.left = `${event.pageX}px`;
+            contextMenu.style.top = `${event.pageY}px`;
+            
+            // Скрытие меню при клике в другом месте
+            const hideContextMenu = () => {
+                contextMenu.style.display = 'none';
+                document.removeEventListener('click', hideContextMenu);
+            };
+            
+            setTimeout(() => {
+                document.addEventListener('click', hideContextMenu);
+            }, 100);
+        }
+
+        // Обработка действий контекстного меню
+        function handleContextAction(action) {
+            if (currentContextItem === null || currentContextType === null) return;
+            
+            if (action === 'delete') {
+                if (currentContextType === 'note') {
+                    appData.notes.splice(currentContextItem, 1);
+                    renderNotes();
+                } else if (currentContextType === 'homework') {
+                    appData.homework.splice(currentContextItem, 1);
+                    renderHomework();
+                }
+                saveData();
+            } else if (action === 'edit') {
+                if (currentContextType === 'note') {
+                    const note = appData.notes[currentContextItem];
+                    noteTitleInput.value = note.title;
+                    noteContentInput.value = note.content;
+                    noteFormOverlay.classList.add('open');
+                    saveNoteBtn.dataset.editIndex = currentContextItem;
+                } else if (currentContextType === 'homework') {
+                    const hw = appData.homework[currentContextItem];
+                    homeworkDateInput.value = hw.date;
+                    homeworkSubjectInput.value = hw.subject;
+                    homeworkTaskInput.value = hw.task;
+                    homeworkFormOverlay.classList.add('open');
+                    saveHomeworkBtn.dataset.editIndex = currentContextItem;
+                }
+            }
+            
+            currentContextItem = null;
+            currentContextType = null;
+        }
+
+        // Копирование email
+        function copyEmail() {
+            const email = 'wertq6306@gmail.com';
+            
+            navigator.clipboard.writeText(email).then(() => {
+                copyNotification.style.display = 'block';
+                setTimeout(() => {
+                    copyNotification.style.display = 'none';
+                }, 2000);
+            }).catch(() => {
+                // Fallback для старых браузеров
+                const tempInput = document.createElement('input');
+                tempInput.value = email;
+                document.body.appendChild(tempInput);
+                tempInput.select();
+                document.execCommand('copy');
+                document.body.removeChild(tempInput);
+                
+                copyNotification.style.display = 'block';
+                setTimeout(() => {
+                    copyNotification.style.display = 'none';
+                }, 2000);
+            });
+        }
+
+        // Настройка обработчиков событий
+        function setupEventListeners() {
+            // Меню
+            menuToggle.addEventListener('click', () => {
+                sidebar.classList.toggle('open');
+                sidebarOverlay.classList.toggle('open');
+            });
+
+            sidebarOverlay.addEventListener('click', () => {
+                sidebar.classList.remove('open');
+                sidebarOverlay.classList.remove('open');
+            });
+
+            menuItems.forEach(item => {
+                item.addEventListener('click', () => {
+                    const section = item.dataset.section;
+                    showSection(section);
+                    sidebar.classList.remove('open');
+                    sidebarOverlay.classList.remove('open');
+                });
+            });
+
+            // Кнопки редактирования расписания
+            editScheduleBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const day = btn.dataset.day;
+                    showScheduleForm(day);
+                });
+            });
+
+            // Заметки
+            addNoteBtn.addEventListener('click', () => {
+                noteTitleInput.value = '';
+                noteContentInput.value = '';
+                noteFormOverlay.classList.add('open');
+                delete saveNoteBtn.dataset.editIndex;
+            });
+
+            addNoteBtnBottom.addEventListener('click', () => {
+                noteTitleInput.value = '';
+                noteContentInput.value = '';
+                noteFormOverlay.classList.add('open');
+                delete saveNoteBtn.dataset.editIndex;
+            });
+
+            cancelNoteBtn.addEventListener('click', () => {
+                noteFormOverlay.classList.remove('open');
+            });
+
+            saveNoteBtn.addEventListener('click', () => {
+                const title = noteTitleInput.value.trim();
+                const content = noteContentInput.value.trim();
+                
+                if (title && content) {
+                    if ('editIndex' in saveNoteBtn.dataset) {
+                        // Редактирование существующей заметки
+                        const index = parseInt(saveNoteBtn.dataset.editIndex);
+                        appData.notes[index] = { title, content };
+                    } else {
+                        // Добавление новой заметки
+                        appData.notes.push({ title, content });
+                    }
+                    
+                    saveData();
+                    renderNotes();
+                    noteFormOverlay.classList.remove('open');
+                }
+            });
+
+            // Домашние задания
+            addHomeworkBtn.addEventListener('click', () => {
+                homeworkDateInput.valueAsDate = new Date();
+                homeworkSubjectInput.value = '';
+                homeworkTaskInput.value = '';
+                homeworkFormOverlay.classList.add('open');
+                delete saveHomeworkBtn.dataset.editIndex;
+            });
+
+            addHomeworkBtnBottom.addEventListener('click', () => {
+                homeworkDateInput.valueAsDate = new Date();
+                homeworkSubjectInput.value = '';
+                homeworkTaskInput.value = '';
+                homeworkFormOverlay.classList.add('open');
+                delete saveHomeworkBtn.dataset.editIndex;
+            });
+
+            cancelHomeworkBtn.addEventListener('click', () => {
+                homeworkFormOverlay.classList.remove('open');
+            });
+
+            saveHomeworkBtn.addEventListener('click', () => {
+                const date = homeworkDateInput.value;
+                const subject = homeworkSubjectInput.value.trim();
+                const task = homeworkTaskInput.value.trim();
+                
+                if (date && subject && task) {
+                    if ('editIndex' in saveHomeworkBtn.dataset) {
+                        // Редактирование существующего ДЗ
+                        const index = parseInt(saveHomeworkBtn.dataset.editIndex);
+                        appData.homework[index] = { date, subject, task, completed: null };
+                    } else {
+                        // Добавление нового ДЗ
+                        appData.homework.push({ date, subject, task, completed: null });
+                    }
+                    
+                    saveData();
+                    renderHomework();
+                    homeworkFormOverlay.classList.remove('open');
+                }
+            });
+
+            // Расписание
+            addScheduleItemBtn.addEventListener('click', () => {
+                addScheduleItemToForm();
+            });
+
+            cancelScheduleBtn.addEventListener('click', () => {
+                scheduleFormOverlay.classList.remove('open');
+                currentEditingDay = null;
+            });
+
+            saveScheduleBtn.addEventListener('click', () => {
+                saveSchedule();
+                currentEditingDay = null;
+            });
+
+            // Переводчик
+            swapLanguagesBtn.addEventListener('click', () => {
+                const sourceLang = sourceLangSelect.value;
+                const targetLang = targetLangSelect.value;
+                
+                sourceLangSelect.value = targetLang;
+                targetLangSelect.value = sourceLang;
+            });
+
+            translateBtn.addEventListener('click', async () => {
+                const text = textToTranslate.value.trim();
+                const sourceLang = sourceLangSelect.value;
+                const targetLang = targetLangSelect.value;
+                
+                if (text) {
+                    translationResult.textContent = 'Перевод...';
+                    
+                    try {
+                        const translatedText = await translateText(text, sourceLang, targetLang);
+                        translationResult.textContent = translatedText;
+                    } catch (error) {
+                        translationResult.textContent = 'Ошибка перевода. Проверьте подключение к интернету.';
+                    }
+                } else {
+                    translationResult.textContent = 'Введите текст для перевода';
+                }
+            });
+
+            // Копирование email
+            emailButton.addEventListener('click', (e) => {
+                e.preventDefault();
+                copyEmail();
+            });
+
+            // Контекстное меню
+            document.querySelectorAll('.context-menu-item').forEach(item => {
+                item.addEventListener('click', () => {
+                    const action = item.dataset.action;
+                    handleContextAction(action);
+                });
+            });
+
+            // Закрытие меню статуса при клике вне его
+            document.addEventListener('click', () => {
+                document.querySelectorAll('.homework-status-menu').forEach(menu => {
+                    menu.style.display = 'none';
+                });
+            });
+        }
+
+        // Инициализация приложения после загрузки DOM
+        document.addEventListener('DOMContentLoaded', initApp);
+    </script>
+
+    <!-- Кнопка установки PWA -->
+    <button id="installBtn"
+            style="display:none;
+                   position: fixed;
+                   bottom: 20px;
+                   right: 100px;
+                   padding: 12px 20px;
+                   background: linear-gradient(135deg, var(--primary), var(--secondary));
+                   color: white;
+                   border: none;
+                   border-radius: 10px;
+                   z-index: 1000;
+                   cursor: pointer;
+                   font-weight: 600;
+                   box-shadow: var(--shadow);">
+      <i class="fas fa-download"></i> Установить
+    </button>
+
+    <script>
+        // PWA функциональность
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function() {
+                navigator.serviceWorker.register('sw.js')
+                    .then(function(reg) {
+                        console.log('Service Worker зарегистрирован:', reg);
+                    }).catch(function(err) {
+                        console.log('Ошибка регистрации Service Worker:', err);
+                    });
+            });
+        }
+
+        let deferredPrompt;
+        const installBtn = document.getElementById('installBtn');
+
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            installBtn.style.display = 'block';
+
+            installBtn.addEventListener('click', () => {
+                installBtn.style.display = 'none';
+                deferredPrompt.prompt();
+                deferredPrompt.userChoice.then((choiceResult) => {
+                    console.log('Результат установки:', choiceResult.outcome);
+                    deferredPrompt = null;
+                });
+            });
+        });
+
+        window.addEventListener('appinstalled', () => {
+            console.log('Приложение установлено');
+            installBtn.style.display = 'none';
+        });
+    </script>
+</body>
+</html>
