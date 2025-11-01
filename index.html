@@ -1860,5 +1860,26 @@
   const app = initializeApp(firebaseConfig);
   const analytics = getAnalytics(app);
 </script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore.js"></script>
+
+<script>
+  // Твой уникальный код конфигурации, который ты получил на Шаге 1
+  const firebaseConfig = {
+    apiKey: "ТВОЙ_API_КЛЮЧ",
+    authDomain: "ТВОЙ_ПРОЕКТ.firebaseapp.com",
+    projectId: "ТВОЙ_ПРОЕКТ-2025",
+    // ... остальной код ...
+  };
+
+  // Инициализация Firebase
+  const app = firebase.initializeApp(firebaseConfig);
+
+  // Инициализация сервисов, которые ты будешь использовать в коде
+  const auth = firebase.auth(); // Для входа/регистрации
+  const db = firebase.firestore(); // Для базы данных
+</script>
+
+<script src="app.js" defer></script>
 </body>
 </html>
