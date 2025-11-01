@@ -1881,5 +1881,26 @@
 </script>
 
 <script src="app.js" defer></script>
+    <div id="auth-container">
+    <h2>Вход / Регистрация в Neuron Study</h2>
+    
+    <input type="email" id="emailInput" placeholder="Введите email">
+    <input type="password" id="passwordInput" placeholder="Введите пароль">
+    
+    <button id="registerButton">Зарегистрироваться</button>
+    <button id="loginButton">Войти</button>
+    
+    <p id="authMessage" style="color: red;"></p>
+</div>
+
+<div id="app-content" style="display: none;">
+    <h3>Добро пожаловать в Neuron Study!</h3>
+    <p>Вы вошли как: <span id="userEmail"></span></p>
+    <button id="logoutButton">Выйти</button>
+
+    <input type="text" id="noteTitle" placeholder="Заголовок заметки">
+    <textarea id="noteContent" placeholder="Текст заметки"></textarea>
+    <button id="saveNoteButton">Сохранить заметку (Firestore)</button>
+</div>
 </body>
 </html>
