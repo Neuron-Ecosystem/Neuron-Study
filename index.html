@@ -1,330 +1,461 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta name="google-site-verification" content="S4yj26laybYjHTBWA5u_2ey7dSgZ4F_5I22864VlCMU" />
-    <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#6366f1">
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Neuron Study</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <style>
-        :root {--primary:#6366f1;--primary-dark:#4f46e5;--secondary:#8f94fb;--bg:#0f0f2a;--text-color:#e5e7eb;--sidebar-bg:#1a1a2e}
-        body{background:var(--bg);color:var(--text-color);font-family:Arial,sans-serif;margin:0;padding-top:60px;overflow-x:hidden}
-        .header{background:var(--sidebar-bg);color:#fff;height:60px;display:flex;align-items:center;position:fixed;width:100%;top:0;left:0;z-index:100;box-shadow:0 2px 4px rgba(0,0,0,.5)}
-        .header .menu-icon{cursor:pointer;font-size:1.5rem;padding:0 20px;z-index:101}
-        .header h1{margin:0 auto;font-size:1.5rem;position:absolute;left:50%;transform:translateX(-50%)}
-        .nav-auth-btn{position:absolute;right:15px;background:transparent;color:#fff;border:2px solid #57a8ff;padding:8px 15px;border-radius:6px;cursor:pointer;font-weight:bold;text-transform:uppercase;transition:.3s;z-index:100}
-        .nav-auth-btn:hover{background:#57a8ff;box-shadow:0 0 10px #57a8ff;color:#111}
-        .nav-sidebar{position:fixed;top:0;left:-300px;width:280px;height:100%;background:var(--sidebar-bg);padding-top:60px;transition:left .3s;z-index:99;overflow-y:auto;border-right:1px solid #333}
-        .nav-sidebar.open{left:0;box-shadow:5px 0 15px rgba(0,0,0,.7)}
-        .sidebar-item{padding:15px 20px;cursor:pointer;font-size:1.1rem;border-bottom:1px solid #2b2b3b;transition:.2s}
-        .sidebar-item:hover,.sidebar-item.active{background:#2b2b3b;color:var(--primary)}
-        .sidebar-item i{margin-right:10px}
-        #overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.5);z-index:98;display:none;cursor:pointer}
-        .content{padding:20px;max-width:1200px;margin:0 auto}
-        .content-view{display:none;padding-top:20px}
-        .content-view.active{display:block}
-        .day-section{background:#1e1e2e;border-radius:8px;padding:20px;margin-bottom:20px;box-shadow:0 4px 6px rgba(0,0,0,.3);position:relative}
-        .day-title{color:var(--secondary);font-size:1.8rem;margin-bottom:10px;border-bottom:2px solid #333;padding-bottom:5px}
-        .edit-btn{position:absolute;top:20px;right:20px;background:var(--primary);color:#fff;border:none;padding:8px 15px;border-radius:5px;cursor:pointer;transition:.2s}
-        .edit-btn:hover{background:var(--primary-dark)}
-        .schedule-placeholder{text-align:center;color:#777;padding:40px 0}
-        .schedule-placeholder i{font-size:3rem;display:block;margin-bottom:10px}
-        #notes-view textarea,#notes-view input{width:100%;padding:10px;margin-bottom:15px;background:#2b2b3b;border:1px solid #444;color:var(--text-color);border-radius:5px;box-sizing:border-box;resize:vertical}
-        #notes-view h3{color:var(--primary)}
-        .note-card,.task-card,.grade-card,.planner-card,.achievement-card{background:#1e1e2e;padding:15px;border-radius:8px;margin-bottom:10px;box-shadow:0 2px 4px rgba(0,0,0,.3)}
-        .note-card h4,.task-card h4,.grade-card h4,.planner-card h4{margin:0 0 8px;color:var(--secondary)}
-        #auth-container{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#1e1e2d;padding:30px;border-radius:10px;z-index:2000;box-shadow:0 0 20px rgba(87,168,255,.5);max-width:400px;width:90%;text-align:center;border:1px solid #57a8ff;animation:fadeIn .3s;display:none}
-        @keyframes fadeIn{from{opacity:0;transform:translate(-50%,-60%)}to{opacity:1;transform:translate(-50%,-50%)}}
-        #auth-container h2{color:var(--primary);margin-bottom:20px}
-        #auth-container input{width:100%;padding:10px;margin-bottom:15px;background:#2b2b3b;border:1px solid #444;color:var(--text-color);border-radius:5px}
-        #auth-container button{padding:10px;border:none;border-radius:5px;cursor:pointer;font-weight:bold;transition:.2s;margin:5px 1%}
-        #registerButton,#loginButton,#googleLoginButton{background:var(--primary);color:#fff;width:48%}
-        #registerButton:hover,#loginButton:hover,#googleLoginButton:hover{background:var(--primary-dark)}
-        .close-btn{position:absolute;top:5px;right:10px;background:none;font-size:1.5rem;color:#fff;opacity:.7}
-        .form-group{margin-bottom:15px}
-        .form-group label{display:block;margin-bottom:5px}
-        .form-group input,.form-group select,.form-group textarea{width:100%;padding:10px;background:#2b2b3b;border:1px solid #444;color:var(--text-color);border-radius:5px}
-        .btn{background:var(--primary);color:#fff;border:none;padding:10px 15px;border-radius:5px;cursor:pointer;margin-right:10px}
-        .btn:hover{background:var(--primary-dark)}
-        .delete-btn{background:#ff6b6b}
-        .delete-btn:hover{background:#ff4d4d}
-        #focus-timer{font-size:2rem;text-align:center;margin:20px 0}
-        .progress-bar{background:#2b2b3b;border-radius:5px;height:20px;margin-top:10px}
-        .progress-fill{background:var(--primary);height:100%;border-radius:5px}
-        @media (max-width:600px){.header h1{font-size:1.2rem}.edit-btn{position:static;margin-top:10px;display:block;width:100%}.nav-auth-btn{right:10px;top:10px;padding:6px 12px;font-size:.8rem}#auth-container{padding:20px}}
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="google-site-verification" content="S4yj26laybYjHTBWA5u_2ey7dSgZ4F_5I22864VlCMU" />
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#6366f1" />
+  <title>Neuron Study</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    :root{--p:#6366f1;--pd:#4f46e5;--s:#8f94fb;--bg:#0f0f2a;--t:#e5e7eb;--sb:#1a1a2e;--card:#1e1e2e;--border:#2b2b3b}
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{background:var(--bg);color:var(--t);font-family:'Segoe UI',Arial,sans-serif;padding-top:60px;overflow-x:hidden}
+    .header{background:var(--sb);color:#fff;height:60px;display:flex;align-items:center;position:fixed;top:0;left:0;width:100%;z-index:100;box-shadow:0 4px 10px rgba(0,0,0,.4)}
+    .header .menu-icon{cursor:pointer;font-size:1.6rem;padding:0 20px;color:var(--s);transition:.2s;display:flex;flex-direction:column;gap:4px}
+    .header .menu-icon:hover{color:#fff}
+    .header .menu-icon span{display:block;width:24px;height:3px;background:var(--s);border-radius:2px;transition:.2s}
+    .header .menu-icon:hover span{background:#fff}
+    .header h1{font-size:1.4rem;font-weight:700;background:linear-gradient(90deg,#57a8ff,#8f94fb);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+    .nav-auth-btn{position:absolute;right:15px;background:linear-gradient(45deg,var(--p),#57a8ff);color:#fff;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;font-weight:600;text-transform:uppercase;font-size:.85rem;transition:.3s;letter-spacing:.5px}
+    .nav-auth-btn:hover{transform:translateY(-2px);box-shadow:0 5px 15px rgba(99,102,241,.5)}
+    .nav-sidebar{position:fixed;top:0;left:-300px;width:280px;height:100%;background:var(--sb);padding-top:60px;transition:left .3s ease;z-index:99;overflow-y:auto;border-right:1px solid var(--border)}
+    .nav-sidebar.open{left:0;box-shadow:8px 0 25px rgba(0,0,0,.6)}
+    .sidebar-item{padding:16px 22px;cursor:pointer;font-size:1.05rem;border-bottom:1px solid var(--border);transition:all .25s;display:flex;align-items:center;gap:12px}
+    .sidebar-item:hover{background:var(--card);color:var(--p)}
+    .sidebar-item.active{background:var(--card);color:var(--p);font-weight:600;border-left:4px solid var(--p)}
+    .sidebar-item i{color:var(--s)}
+    .sidebar-item.active i{color:var(--p)}
+    #overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.6);z-index:98;display:none;cursor:pointer;backdrop-filter:blur(3px)}
+    .content{padding:20px;max-width:1200px;margin:0 auto}
+    .content-view{display:none;padding-top:20px}
+    .content-view.active{display:block;animation:fadeIn .4s}
+    @keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+    .section-title{font-size:1.8rem;color:var(--s);margin-bottom:20px;padding-bottom:8px;border-bottom:2px solid var(--border);font-weight:600}
+    .card{background:var(--card);border-radius:12px;padding:20px;margin-bottom:16px;box-shadow:0 4px 12px rgba(0,0,0,.3);border:1px solid var(--border);transition:transform .2s}
+    .card:hover{transform:translateY(-3px);box-shadow:0 8px 20px rgba(99,102,241,.2)}
+    .form-group{margin-bottom:16px}
+    .form-group label{display:block;margin-bottom:6px;color:var(--s);font-size:.95rem;font-weight:500}
+    .form-group input,.form-group select,.form-group textarea{width:100%;padding:12px 14px;background:var(--card);border:1px solid var(--border);color:var(--t);border-radius:8px;font-size:1rem;transition:border .2s}
+    .form-group input:focus,.form-group textarea:focus{border-color:var(--p);outline:none;box-shadow:0 0 0 2px rgba(99,102,241,.3)}
+    .btn{background:linear-gradient(45deg,var(--p),var(--pd));color:#fff;border:none;padding:10px 18px;border-radius:8px;cursor:pointer;font-weight:600;transition:all .25s;font-size:.95rem}
+    .btn:hover{background:linear-gradient(45deg,var(--pd),#3b3bc7);transform:translateY(-1px);box-shadow:0 4px 10px rgba(99,102,241,.4)}
+    .btn:active{transform:translateY(0)}
+    .delete-btn{background:#ff6b6b;color:#fff}
+    .delete-btn:hover{background:#ff4d4d}
+    .day-section{position:relative;overflow:hidden}
+    .day-title{font-size:1.6rem;color:var(--s);margin-bottom:12px}
+    .edit-btn{position:absolute;top:16px;right:16px;background:var(--p);color:#fff;padding:6px 12px;font-size:.85rem}
+    .edit-btn:hover{background:var(--pd)}
+    .empty-state{text-align:center;color:#777;padding:40px 0}
+    .empty-state i{font-size:3rem;color:#444;margin-bottom:16px;display:block}
+    .task-item,.note-item,.grade-item,.planner-item{display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px dashed var(--border)}
+    .task-item:last-child,.note-item:last-child,.grade-item:last-child,.planner-item:last-child{border:none}
+    .task-title{font-weight:600;color:var(--t)}
+    .task-meta{font-size:.85rem;color:#aaa}
+    .progress-bar{background:var(--border);height:8px;border-radius:4px;overflow:hidden;margin-top:8px}
+    .progress-fill{background:linear-gradient(90deg,var(--p),#57a8ff);height:100%;border-radius:4px;transition:width .4s}
+    .achievement-card{background:linear-gradient(135deg,#1e3a8a,#0f172a);border:1px solid #3b82f6;color:#fff;text-align:center;padding:16px;border-radius:12px;margin-bottom:12px;position:relative}
+    .achievement-card h4{margin:0 0 8px;color:#60a5fa}
+    .achievement-card.completed{opacity:0.7;border-color:#10b981}
+    .achievement-card.completed::after{content:"Checkmark";position:absolute;top:8px;right:12px;font-size:1.5rem;color:#10b981;font-weight:bold}
+    #auth-container{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:var(--card);padding:32px;border-radius:16px;z-index:2000;max-width:400px;width:90%;text-align:center;border:2px solid var(--p);box-shadow:0 0 30px rgba(99,102,241,.5);display:none}
+    .close-btn{position:absolute;top:10px;right:12px;background:none;color:#fff;font-size:1.6rem;cursor:pointer;opacity:.7}
+    .close-btn:hover{opacity:1}
+    .social-links{display:flex;gap:20px;justify-content:center;margin-top:20px}
+    .social-links a{font-size:2rem;color:var(--s);transition:.3s}
+    .social-links a:hover{color:var(--p);transform:scale(1.15)}
+    .avg-grade{display:inline-block;background:var(--p);color:#fff;padding:6px 12px;border-radius:20px;font-weight:600;margin:4px}
+    .toast{position:fixed;bottom:20px;right:20px;background:var(--p);color:#fff;padding:16px 24px;border-radius:12px;box-shadow:0 8px 20px rgba(0,0,0,.4);z-index:10000;animation:toastIn .4s forwards}
+    @keyframes toastIn{from{transform:translateX(100%);opacity:0}to{transform:none;opacity:1}}
+    .subject-avg{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px;justify-content:center}
+    @media (max-width:600px){
+      .header h1{font-size:1.2rem}
+      .edit-btn{position:static;display:block;width:100%;margin-top:12px;border-radius:8px}
+      .nav-auth-btn{font-size:.75rem;padding:6px 10px}
+      #auth-container{padding:24px}
+    }
+  </style>
 </head>
 <body>
-    <header class="header">
-        <div class="menu-icon" id="menuIcon"><i class="fas fa-bars"></i></div>
-        <h1>Neuron Study</h1>
-        <button id="mainAuthButton" class="nav-auth-btn">Войти / Регистрация</button>
-    </header>
+  <header class="header">
+    <div class="menu-icon" id="menuIcon">
+      <span></span>
+      <span></span>
+      <span></span>
+    </div>
+    <h1>Neuron Study</h1>
+    <button id="mainAuthButton" class="nav-auth-btn">Войти</button>
+  </header>
 
-    <aside class="nav-sidebar" id="navSidebar">
-        <div class="sidebar-item active" id="menu-schedule"><i class="fas fa-calendar-alt"></i> Расписание</div>
-        <div class="sidebar-item" id="menu-homework"><i class="fas fa-tasks"></i> ДЗ</div>
-        <div class="sidebar-item" id="menu-notes"><i class="fas fa-sticky-note"></i> Заметки</div>
-        <div class="sidebar-item" id="menu-translator"><i class="fas fa-language"></i> Переводчик</div>
-        <div class="sidebar-item" id="menu-ai"><i class="fas fa-robot"></i> AI-помощник</div>
-        <div class="sidebar-item" id="menu-grades"><i class="fas fa-chart-line"></i> Оценки</div>
-        <div class="sidebar-item" id="menu-planner"><i class="fas fa-clipboard-check"></i> Планировщик</div>
-        <div class="sidebar-item" id="menu-achievements"><i class="fas fa-trophy"></i> Достижения</div>
-        <div class="sidebar-item" id="menu-import"><i class="fas fa-file-import"></i> Импорт</div>
-        <div class="sidebar-item" id="menu-focus"><i class="fas fa-clock"></i> Фокус-режим</div>
-        <div class="sidebar-item" id="menu-about"><i class="fas fa-info-circle"></i> О нас</div>
-        <hr style="border-color:#2b2b3b">
-        <div class="sidebar-item" id="menu-logout" style="color:#ff6b6b;display:none"><i class="fas fa-sign-out-alt"></i> Выйти</div>
-    </aside>
+  <aside class="nav-sidebar" id="navSidebar">
+    <div class="sidebar-item active" data-view="schedule"><i class="fas fa-calendar-alt"></i> Расписание</div>
+    <div class="sidebar-item" data-view="homework"><i class="fas fa-tasks"></i> ДЗ</div>
+    <div class="sidebar-item" data-view="notes"><i class="fas fa-sticky-note"></i> Заметки</div>
+    <div class="sidebar-item" data-view="grades"><i class="fas fa-chart-line"></i> Оценки</div>
+    <div class="sidebar-item" data-view="planner"><i class="fas fa-clipboard-check"></i> Планировщик</div>
+    <div class="sidebar-item" data-view="achievements"><i class="fas fa-trophy"></i> Достижения</div>
+    <div class="sidebar-item" data-view="about"><i class="fas fa-info-circle"></i> О нас</div>
+    <hr style="border-color:var(--border);margin:16px 0">
+    <div class="sidebar-item" id="menu-logout" style="color:#ff6b6b;display:none"><i class="fas fa-sign-out-alt"></i> Выйти</div>
+  </aside>
 
-    <div id="overlay"></div>
+  <div id="overlay"></div>
 
-    <div class="content">
-        <!-- Schedule -->
-        <div id="schedule-view" class="content-view active">
-            <h2>Расписание</h2>
-            <p style="color:#aaa">Сохраняется в Firestore при входе.</p>
-            <div><label>Неделя: </label><select id="week-select"><option value="week1">1</option><option value="week2">2</option></select></div>
-            <div id="schedule-content">
-                <!-- Days generated by JS -->
-            </div>
-        </div>
+  <div class="content">
 
-        <!-- Homework -->
-        <div id="homework-view" class="content-view">
-            <h2>Домашние задания</h2>
-            <div class="form-group"><label>Предмет:</label><input id="hw-subject"></div>
-            <div class="form-group"><label>Заголовок:</label><input id="hw-title"></div>
-            <div class="form-group"><label>Дедлайн:</label><input type="date" id="hw-deadline"></div>
-            <button class="btn" id="add-hw-btn">Добавить</button>
-            <div id="hw-list"></div>
-        </div>
-
-        <!-- Notes -->
-        <div id="notes-view" class="content-view">
-            <h2>Заметки <span style="font-size:.8rem;color:#888">(<span id="userEmailNotes">Аноним</span>)</span></h2>
-            <div class="form-group"><label>Предмет:</label><input id="note-subject"></div>
-            <input id="noteTitle" placeholder="Заголовок">
-            <textarea id="noteContent" placeholder="Текст"></textarea>
-            <input type="file" id="note-file">
-            <button id="saveNoteButton" class="btn">Сохранить</button>
-            <p id="noteMessage" style="color:red"></p>
-            <div class="form-group"><label>Поиск:</label><input id="notes-search" placeholder="Поиск..."></div>
-            <div id="savedNotesList"></div>
-        </div>
-
-        <!-- Translator -->
-        <div id="translator-view" class="content-view">
-            <h2>Переводчик</h2>
-            <div class="form-group"><label>С языка:</label><select id="from-lang">
-                <option value="ru">Русский</option><option value="en">English</option><option value="zh">中文</option>
-                <option value="ja">日本語</option><option value="fr">Français</option><option value="es">Español</option>
-                <option value="pt">Português</option><option value="pt-BR">Português (BR)</option>
-            </select></div>
-            <div class="form-group"><label>На язык:</label><select id="to-lang">
-                <option value="ru">Русский</option><option value="en">English</option><option value="zh">中文</option>
-                <option value="ja">日本語</option><option value="fr">Français</option><option value="es">Español</option>
-                <option value="pt">Português</option><option value="pt-BR">Português (BR)</option>
-            </select></div>
-            <textarea id="translate-input" placeholder="Текст"></textarea>
-            <button class="btn" id="translate-btn">Перевести</button>
-            <div id="translate-result"></div>
-            <h3>История</h3><div id="translatorHistoryList"></div>
-        </div>
-
-        <!-- AI -->
-        <div id="ai-view" class="content-view">
-            <h2>AI-помощник</h2>
-            <select id="ai-mode"><option value="explain">Объясни</option><option value="summary">Конспект</option><option value="check">Орфография</option></select>
-            <textarea id="ai-input" placeholder="Введите текст"></textarea>
-            <input type="file" id="ai-image" accept="image/*">
-            <button class="btn" id="ai-submit">Отправить</button>
-            <div id="ai-result"></div>
-        </div>
-
-        <!-- Grades -->
-        <div id="grades-view" class="content-view">
-            <h2>Оценки</h2>
-            <div class="form-group"><label>Предмет:</label><input id="grade-subject"></div>
-            <div class="form-group"><label>Оценка:</label><input type="number" id="grade-value" min="1" max="5"></div>
-            <div class="form-group"><label>Дата:</label><input type="date" id="grade-date"></div>
-            <button class="btn" id="add-grade-btn">Добавить</button>
-            <div id="grades-list"></div>
-            <canvas id="grades-chart"></canvas>
-        </div>
-
-        <!-- Planner -->
-        <div id="planner-view" class="content-view">
-            <h2>Планировщик</h2>
-            <div class="form-group"><label>Цель:</label><input id="planner-goal"></div>
-            <div class="form-group"><label>Прогресс:</label><input type="number" id="planner-progress" min="0" max="100"></div>
-            <div class="form-group"><label>Дедлайн:</label><input type="date" id="planner-deadline"></div>
-            <button class="btn" id="add-planner-btn">Добавить</button>
-            <div id="planner-list"></div>
-        </div>
-
-        <!-- Achievements -->
-        <div id="achievements-view" class="content-view">
-            <h2>Достижения</h2>
-            <div id="achievements-list"></div>
-            <p>Очки: <span id="user-points">0</span></p>
-        </div>
-
-        <!-- Import -->
-        <div id="import-view" class="content-view">
-            <h2>Импорт</h2>
-            <input type="file" id="import-file" accept=".csv"><button class="btn" id="import-btn">Импорт</button>
-            <div id="import-result"></div>
-        </div>
-
-        <!-- Focus -->
-        <div id="focus-view" class="content-view">
-            <h2>Фокус-режим</h2>
-            <div id="focus-timer">25:00</div>
-            <button class="btn" id="start-focus">Старт</button>
-            <button class="btn" id="stop-focus">Стоп</button>
-        </div>
-
-        <!-- About -->
-        <div id="about-view" class="content-view">
-            <h2>О Neuron Study</h2>
-            <div class="day-section">
-                <p>Персональный помощник для учёбы. Версия 2.0</p>
-            </div>
-        </div>
+    <!-- Расписание -->
+    <div id="schedule-view" class="content-view active">
+      <h2 class="section-title">Расписание</h2>
+      <div id="schedule-content"></div>
     </div>
 
-    <!-- Auth Modal -->
-    <div id="auth-container">
-        <h2>Вход / Регистрация</h2>
-        <input type="email" id="emailInput" placeholder="Email">
-        <input type="password" id="passwordInput" placeholder="Пароль">
-        <button id="registerButton">Регистрация</button>
-        <button id="loginButton">Вход</button>
-        <button id="googleLoginButton">Google</button>
-        <button id="installBtn" style="display:none">Установить</button>
-        <p id="authMessage" style="color:red"></p>
-        <button class="close-btn" id="closeAuthButton">x</button>
+    <!-- ДЗ -->
+    <div id="homework-view" class="content-view">
+      <h2 class="section-title">Домашние задания</h2>
+      <div class="card">
+        <div class="form-group"><input id="hw-subject" placeholder="Предмет"></div>
+        <div class="form-group"><input id="hw-title" placeholder="Задание"></div>
+        <div class="form-group"><input type="date" id="hw-deadline"></div>
+        <button class="btn" id="add-hw">Добавить</button>
+      </div>
+      <div id="hw-list"></div>
     </div>
 
-    <!-- Schedule Editor -->
-    <div id="schedule-editor-modal" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#1e1e2d;padding:20px;border-radius:10px;z-index:3000;max-width:500px;width:90%;box-shadow:0 0 20px rgba(255,255,255,.2)">
-        <h3 id="editor-title">Редактирование</h3>
-        <textarea id="scheduleTextarea" rows="10"></textarea>
-        <button id="saveScheduleEdit" class="btn">Сохранить</button>
-        <button id="closeScheduleEdit" class="btn">Отмена</button>
+    <!-- Заметки -->
+    <div id="notes-view" class="content-view">
+      <h2 class="section-title">Заметки</h2>
+      <div class="card">
+        <div class="form-group"><input id="note-subject" placeholder="Предмет"></div>
+        <div class="form-group"><input id="note-title" placeholder="Заголовок"></div>
+        <div class="form-group"><textarea id="note-content" rows="4" placeholder="Текст заметки"></textarea></div>
+        <button class="btn" id="save-note">Сохранить</button>
+      </div>
+      <div id="notes-list"></div>
     </div>
 
-    <!-- Firebase -->
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
+    <!-- Оценки -->
+    <div id="grades-view" class="content-view">
+      <h2 class="section-title">Оценки</h2>
+      <div class="card">
+        <div class="form-group"><input id="grade-subject" placeholder="Предмет"></div>
+        <div class="form-group"><input type="number" id="grade-value" min="1" max="5" placeholder="Оценка (1-5)"></div>
+        <div class="form-group"><input type="date" id="grade-date"></div>
+        <button class="btn" id="add-grade">Добавить</button>
+      </div>
+      <div id="grades-list"></div>
+      <div id="subject-averages" class="subject-avg"></div>
+      <canvas id="grades-chart" height="200" style="margin-top:20px"></canvas>
+    </div>
 
-    <script>
-        const firebaseConfig = {
-            apiKey: "AIzaSyDOaDVzzPjyYm4HWMND2XYWjLy_h4wty5s",
-            authDomain: "neuron-ecosystem-2025.firebaseapp.com",
-            projectId: "neuron-ecosystem-2025",
-            storageBucket: "neuron-ecosystem-2025.firebasestorage.app",
-            messagingSenderId: "589834476565",
-            appId: "1:589834476565:web:c9c878a905ecece4dd421c"
-        };
-        firebase.initializeApp(firebaseConfig);
-        const auth = firebase.auth();
-        const db = firebase.firestore();
-        const storage = firebase.storage();
+    <!-- Планировщик -->
+    <div id="planner-view" class="content-view">
+      <h2 class="section-title">Планировщик</h2>
+      <div class="card">
+        <div class="form-group"><input id="planner-goal" placeholder="Цель"></div>
+        <div class="form-group"><input type="date" id="planner-deadline" placeholder="Дедлайн"></div>
+        <div class="form-group">
+          <select id="planner-reminder">
+            <option value="0">Без напоминания</option>
+            <option value="3600000">За 1 час</option>
+            <option value="86400000">За 1 день</option>
+            <option value="604800000">За неделю</option>
+          </select>
+        </div>
+        <button class="btn" id="add-planner">Добавить</button>
+      </div>
+      <div id="planner-list"></div>
+    </div>
 
-        let deferredPrompt, currentWeek = 'week1', scheduleData = {week1:{},week2:{}}, notesData=[], homeworkData=[], gradesData=[], plannerData=[], achievementsData=[], userPoints=0, translateHistory=[];
-        const DAYS = ["Понедельник","Вторник","Среда","Четверг","Пятница","Суббота","Воскресенье"];
-        let gradesChart;
+    <!-- Достижения -->
+    <div id="achievements-view" class="content-view">
+      <h2 class="section-title">Достижения</h2>
+      <div id="achievements-list"></div>
+      <p style="text-align:center;margin-top:20px;font-size:1.1rem">Очки: <strong id="user-points" style="color:var(--p)">0</strong></p>
+    </div>
 
-        // PWA
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => navigator.serviceWorker.register('sw.js'));
-        }
-        window.addEventListener('beforeinstallprompt', e => {
-            e.preventDefault(); deferredPrompt = e;
-            document.getElementById('installBtn').style.display = 'block';
+    <!-- О нас -->
+    <div id="about-view" class="content-view">
+      <h2 class="section-title">О Neuron Study</h2>
+      <div class="card">
+        <p style="text-align:center;margin-bottom:20px">Neuron Study — часть экосистемы Neuron. Умный помощник для учёбы с оффлайн-доступом и синхронизацией.</p>
+        <div class="social-links">
+          <a href="https://t.me/neuron_ecosystem" target="_blank"><i class="fab fa-telegram"></i></a>
+          <a href="https://vk.com/club233118101" target="_blank"><i class="fab fa-vk"></i></a>
+          <a href="https://neuron-p2p.ru" target="_blank"><i class="fas fa-globe"></i></a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Модалка входа -->
+  <div id="auth-container">
+    <h2 style="color:var(--p);margin-bottom:20px">Вход / Регистрация</h2>
+    <input type="email" id="email" placeholder="Email" class="form-group">
+    <input type="password" id="password" placeholder="Пароль" class="form-group">
+    <button id="register" class="btn" style="width:48%;margin:5px 1%">Регистрация</button>
+    <button id="login" class="btn" style="width:48%;margin:5px 1%">Вход</button>
+    <button id="google" class="btn" style="width:96%;margin:10px 2%;background:#4285f4">Google</button>
+    <button class="close-btn" id="close-auth">×</button>
+  </div>
+
+  <!-- Редактор расписания -->
+  <div id="schedule-editor" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:var(--card);padding:24px;border-radius:16px;z-index:3000;max-width:500px;width:90%;box-shadow:0 0 30px rgba(99,102,241,.6);border:1px solid var(--p)">
+    <h3 id="editor-day" style="color:var(--s);margin-bottom:16px"></h3>
+    <textarea id="editor-text" rows="10" class="form-group" placeholder="Введите расписание..."></textarea>
+    <div style="display:flex;gap:12px;margin-top:16px">
+      <button class="btn" id="save-schedule" style="flex:1">Сохранить</button>
+      <button class="btn" id="cancel-schedule" style="flex:1;background:#666">Отмена</button>
+    </div>
+  </div>
+
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+
+  <script>
+    const firebaseConfig = { apiKey: "AIzaSyDOaDVzzPjyYm4HWMND2XYWjLy_h4wty5s", authDomain: "neuron-ecosystem-2025.firebaseapp.com", projectId: "neuron-ecosystem-2025", storageBucket: "neuron-ecosystem-2025.firebasestorage.app", messagingSenderId: "589834476565", appId: "1:589834476565:web:c9c878a905ecece4dd421c" };
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+
+    if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
+
+    // UI
+    const menuIcon = document.getElementById('menuIcon'), sidebar = document.getElementById('navSidebar'), overlay = document.getElementById('overlay');
+    const authModal = document.getElementById('auth-container'), mainAuthBtn = document.getElementById('mainAuthButton');
+    const logoutBtn = document.getElementById('menu-logout');
+
+    menuIcon.onclick = () => { sidebar.classList.toggle('open'); overlay.style.display = sidebar.classList.contains('open') ? 'block' : 'none'; };
+    overlay.onclick = () => { sidebar.classList.remove('open'); overlay.style.display = 'none'; authModal.style.display = 'none'; document.getElementById('schedule-editor').style.display = 'none'; };
+
+    document.querySelectorAll('.sidebar-item[data-view]').forEach(item => {
+      item.onclick = () => {
+        document.querySelectorAll('.content-view').forEach(v => v.classList.remove('active'));
+        document.getElementById(item.dataset.view + '-view').classList.add('active');
+        document.querySelectorAll('.sidebar-item').forEach(i => i.classList.remove('active'));
+        item.classList.add('active');
+        sidebar.classList.remove('open'); overlay.style.display = 'none';
+      };
+    });
+
+    // Расписание
+    const DAYS = ["Понедельник","Вторник","Среда","Четверг","Пятница","Суббота","Воскресенье"];
+    let schedule = {}, homework = [], notes = [], grades = [], planner = [], points = 0, achievements = [];
+
+    function renderSchedule() {
+      const c = document.getElementById('schedule-content'); c.innerHTML = '';
+      DAYS.forEach(d => {
+        const div = document.createElement('div'); div.className = 'card day-section';
+        div.innerHTML = `
+          <h3 class="day-title">${d}</h3>
+          <button class="edit-btn" onclick="editDay('${d}')">Редактировать</button>
+          <div style="margin-top:50px;white-space:pre-wrap;font-size:1rem;line-height:1.6">
+            ${schedule[d] ? schedule[d].replace(/\\n/g,'<br>') : '<p class="empty-state"><i class="far fa-calendar-alt"></i><br>Пусто</p>'}
+          </div>`;
+        c.appendChild(div);
+      });
+    }
+    window.editDay = d => {
+      document.getElementById('editor-day').textContent = d;
+      document.getElementById('editor-text').value = schedule[d] || '';
+      document.getElementById('schedule-editor').style.display = 'block';
+      overlay.style.display = 'block';
+    };
+    document.getElementById('save-schedule').onclick = () => {
+      const d = document.getElementById('editor-day').textContent;
+      schedule[d] = document.getElementById('editor-text').value;
+      renderSchedule();
+      document.getElementById('schedule-editor').style.display = 'none';
+      overlay.style.display = 'none';
+      if (auth.currentUser) db.collection('users').doc(auth.currentUser.uid).set({schedule}, {merge:true});
+    };
+    document.getElementById('cancel-schedule').onclick = () => { document.getElementById('schedule-editor').style.display = 'none'; overlay.style.display = 'none'; };
+
+    // ДЗ
+    document.getElementById('add-hw').onclick = () => {
+      const s = document.getElementById('hw-subject').value.trim(), t = document.getElementById('hw-title').value.trim(), dl = document.getElementById('hw-deadline').value;
+      if (!s || !t || !dl) return alert('Заполните все поля');
+      const task = {id:Date.now(), subject:s, title:t, deadline:dl};
+      homework.push(task); renderHomework(); addPoints(5); checkAchievements();
+      clearInputs(['hw-subject','hw-title','hw-deadline']);
+      if (auth.currentUser) db.collection('users').doc(auth.currentUser.uid).collection('homework').doc(task.id.toString()).set(task);
+    };
+    function renderHomework() {
+      const l = document.getElementById('hw-list'); l.innerHTML = '';
+      homework.sort((a,b) => a.deadline.localeCompare(b.deadline)).forEach(t => {
+        const div = document.createElement('div'); div.className = 'card';
+        div.innerHTML = `<div class="task-item"><div><div class="task-title">${t.title}</div><div class="task-meta">${t.subject} • ${new Date(t.deadline).toLocaleDateString()}</div></div>
+          <button class="delete-btn btn" onclick="deleteTask(${t.id})">×</button></div>`;
+        l.appendChild(div);
+      });
+    }
+    window.deleteTask = id => { homework = homework.filter(t => t.id !== id); renderHomework(); if (auth.currentUser) db.collection('users').doc(auth.currentUser.uid).collection('homework').doc(id.toString()).delete(); };
+
+    // Заметки
+    document.getElementById('save-note').onclick = () => {
+      const s = document.getElementById('note-subject').value.trim(), t = document.getElementById('note-title').value.trim(), c = document.getElementById('note-content').value.trim();
+      if (!s || !t || !c) return alert('Заполните все поля');
+      const note = {id:Date.now(), subject:s, title:t, content:c, date:new Date().toISOString()};
+      notes.push(note); renderNotes(); addPoints(3); checkAchievements();
+      clearInputs(['note-subject','note-title','note-content']);
+      if (auth.currentUser) db.collection('users').doc(auth.currentUser.uid).collection('notes').doc(note.id.toString()).set(note);
+    };
+    function renderNotes() {
+      const l = document.getElementById('notes-list'); l.innerHTML = '';
+      notes.sort((a,b) => b.date.localeCompare(a.date)).forEach(n => {
+        const div = document.createElement('div'); div.className = 'card';
+        div.innerHTML = `<div class="note-item"><div><div class="task-title">${n.title}</div><div class="task-meta">${n.subject} • ${new Date(n.date).toLocaleDateString()}</div></div>
+          <button class="delete-btn btn" onclick="deleteNote(${n.id})">×</button></div>`;
+        l.appendChild(div);
+      });
+    }
+    window.deleteNote = id => { notes = notes.filter(n => n.id !== id); renderNotes(); if (auth.currentUser) db.collection('users').doc(auth.currentUser.uid).collection('notes').doc(id.toString()).delete(); };
+
+    // Оценки — среднее по предметам
+    let gradesChart;
+    document.getElementById('add-grade').onclick = () => {
+      const s = document.getElementById('grade-subject').value.trim(), v = parseInt(document.getElementById('grade-value').value), d = document.getElementById('grade-date').value;
+      if (!s || isNaN(v) || v<1 || v>5 || !d) return alert('Проверьте данные');
+      const grade = {id:Date.now(), subject:s, value:v, date:d};
+      grades.push(grade); renderGrades(); updateSubjectAverages(); addPoints(v); checkAchievements();
+      clearInputs(['grade-subject','grade-value','grade-date']);
+      if (auth.currentUser) db.collection('users').doc(auth.currentUser.uid).collection('grades').doc(grade.id.toString()).set(grade);
+    };
+    function renderGrades() {
+      const l = document.getElementById('grades-list'); l.innerHTML = '';
+      grades.sort((a,b) => b.date.localeCompare(a.date)).forEach(g => {
+        const div = document.createElement('div'); div.className = 'card';
+        div.innerHTML = `<div class="grade-item"><div><div class="task-title">${g.subject}</div><div class="task-meta">Оценка: ${g.value} • ${new Date(g.date).toLocaleDateString()}</div></div>
+          <button class="delete-btn btn" onclick="deleteGrade(${g.id})">×</button></div>`;
+        l.appendChild(div);
+      });
+      updateChart();
+    }
+    function updateSubjectAverages() {
+      const container = document.getElementById('subject-averages'); container.innerHTML = '';
+      const subjects = {};
+      grades.forEach(g => {
+        if (!subjects[g.subject]) subjects[g.subject] = [];
+        subjects[g.subject].push(g.value);
+      });
+      Object.keys(subjects).forEach(sub => {
+        const avg = (subjects[sub].reduce((a,b)=>a+b,0)/subjects[sub].length).toFixed(2);
+        const span = document.createElement('span'); span.className = 'avg-grade';
+        span.textContent = `${sub}: ${avg}`;
+        container.appendChild(span);
+      });
+      if (Object.keys(subjects).length === 0) container.innerHTML = '<p style="text-align:center;color:#777">Оценок нет</p>';
+    }
+    function updateChart() {
+      const ctx = document.getElementById('grades-chart').getContext('2d');
+      const subjects = [...new Set(grades.map(g => g.subject))];
+      const datasets = subjects.map(sub => {
+        const data = grades.filter(g => g.subject === sub).map(g => g.value);
+        const dates = grades.filter(g => g.subject === sub).map(g => new Date(g.date).toLocaleDateString('ru'));
+        return {label: sub, data, borderColor: `hsl(${Math.random()*360}, 70%, 50%)`, tension: 0.3};
+      });
+      if (gradesChart) gradesChart.destroy();
+      gradesChart = new Chart(ctx, {type:'line',data:{labels: [...new Set(grades.map(g => new Date(g.date).toLocaleDateString('ru')))], datasets},options:{responsive:true,scales:{y:{min:1,max:5}}}});
+    }
+    window.deleteGrade = id => { grades = grades.filter(g => g.id !== id); renderGrades(); updateSubjectAverages(); if (auth.currentUser) db.collection('users').doc(auth.currentUser.uid).collection('grades').doc(id.toString()).delete(); };
+
+    // Планировщик
+    document.getElementById('add-planner').onclick = () => {
+      const g = document.getElementById('planner-goal').value.trim(), dl = document.getElementById('planner-deadline').value, r = parseInt(document.getElementById('planner-reminder').value);
+      if (!g || !dl) return alert('Укажите цель и дедлайн');
+      const item = {id:Date.now(), goal:g, deadline:dl, reminder:r, progress:0};
+      planner.push(item); renderPlanner(); addPoints(4); checkAchievements();
+      clearInputs(['planner-goal','planner-deadline']);
+      if (auth.currentUser) db.collection('users').doc(auth.currentUser.uid).collection('planner').doc(item.id.toString()).set(item);
+    };
+    function renderPlanner() {
+      const l = document.getElementById('planner-list'); l.innerHTML = '';
+      planner.forEach(p => {
+        const div = document.createElement('div'); div.className = 'card';
+        div.innerHTML = `<div><div class="task-title">${p.goal}</div><div class="task-meta">Дедлайн: ${new Date(p.deadline).toLocaleDateString()}</div>
+          <div class="progress-bar"><div class="progress-fill" style="width:${p.progress}%"></div></div></div>
+          <button class="delete-btn btn" onclick="deletePlanner(${p.id})">×</button>`;
+        l.appendChild(div);
+      });
+    }
+    window.deletePlanner = id => { planner = planner.filter(p => p.id !== id); renderPlanner(); if (auth.currentUser) db.collection('users').doc(auth.currentUser.uid).collection('planner').doc(id.toString()).delete(); };
+
+    // Достижения
+    const ACHIEVEMENTS = [
+      {id:1, title:"Первая заметка", desc:"Создайте свою первую заметку", check:() => notes.length >= 1},
+      {id:2, title:"5 ДЗ подряд", desc:"Добавьте 5 домашних заданий", check:() => homework.length >= 5},
+      {id:4, title:"Средний балл 5.0", desc:"Достигните среднего балла 5.0 по любому предмету", check:() => {
+        const subs = {}; grades.forEach(g => { if (!subs[g.subject]) subs[g.subject] = []; subs[g.subject].push(g.value); });
+        return Object.values(subs).some(arr => arr.reduce((a,b)=>a+b,0)/arr.length >= 5);
+      }},
+      {id:6, title:"Планировщик", desc:"Создайте 3 цели", check:() => planner.length >= 3},
+      {id:8, title:"100 очков", desc:"Наберите 100 очков", check:() => points >= 100}
+    ];
+    function renderAchievements() {
+      const l = document.getElementById('achievements-list'); l.innerHTML = '';
+      ACHIEVEMENTS.forEach(a => {
+        const completed = achievements.includes(a.id) || a.check();
+        if (completed && !achievements.includes(a.id)) { achievements.push(a.id); showToast(`Достижение: ${a.title}!`); }
+        const div = document.createElement('div'); div.className = `achievement-card ${completed ? 'completed' : ''}`;
+        div.innerHTML = `<h4>${a.title}</h4><p>${a.desc}</p>`;
+        l.appendChild(div);
+      });
+    }
+    function checkAchievements() { renderAchievements(); if (auth.currentUser) db.collection('users').doc(auth.currentUser.uid).set({achievements}, {merge:true}); }
+
+    function showToast(msg) {
+      const t = document.createElement('div'); t.className = 'toast'; t.textContent = msg; document.body.appendChild(t);
+      setTimeout(() => t.remove(), 3000);
+    }
+
+    // Уведомления
+    function notify(msg) { if (Notification.permission === 'granted') new Notification('Neuron Study', {body:msg,icon:'favicon-192x192.png'}); }
+    if (Notification.permission === 'default') Notification.requestPermission();
+
+    // Авторизация
+    mainAuthBtn.onclick = () => authModal.style.display = 'block';
+    document.getElementById('close-auth').onclick = () => authModal.style.display = 'none';
+    document.getElementById('register').onclick = () => { const e = document.getElementById('email').value, p = document.getElementById('password').value; auth.createUserWithEmailAndPassword(e,p).catch(err=>alert(err.message)); };
+    document.getElementById('login').onclick = () => { const e = document.getElementById('email').value, p = document.getElementById('password').value; auth.signInWithEmailAndPassword(e,p).catch(err=>alert(err.message)); };
+    logoutBtn.onclick = () => auth.signOut();
+
+    auth.onAuthStateChanged(u => {
+      if (u) { mainAuthBtn.textContent = 'Выйти'; logoutBtn.style.display = 'block'; loadAll(u.uid); }
+      else { mainAuthBtn.textContent = 'Войти'; logoutBtn.style.display = 'none'; schedule = {}; homework = []; notes = []; grades = []; planner = []; points = 0; achievements = []; renderAll(); }
+    });
+
+    function loadAll(uid) {
+      db.collection('users').doc(uid).onSnapshot(d => { 
+        const data = d.data() || {}; 
+        schedule = data.schedule || {}; points = data.points || 0; achievements = data.achievements || [];
+        renderSchedule(); document.getElementById('user-points').textContent = points; renderAchievements();
+      });
+      ['homework','notes','grades','planner'].forEach(col => {
+        db.collection('users').doc(uid).collection(col).onSnapshot(s => { 
+          window[col] = s.docs.map(doc=>({id:doc.id,...doc.data()})); 
+          eval(`render${col.charAt(0).toUpperCase() + col.slice(1)}()`); 
+          if (col === 'grades') updateSubjectAverages();
         });
-        document.getElementById('installBtn').onclick = () => deferredPrompt?.prompt();
+      });
+    }
+    function saveAllToFirestore(uid) {
+      db.collection('users').doc(uid).set({schedule, points, achievements}, {merge:true});
+      ['homework','notes','grades','planner'].forEach(col => {
+        const items = eval(col);
+        items.forEach(item => db.collection('users').doc(uid).collection(col).doc(item.id.toString()).set(item));
+      });
+    }
 
-        // Elements
-        const menuIcon = document.getElementById('menuIcon'), navSidebar = document.getElementById('navSidebar'), overlay = document.getElementById('overlay');
-        const authContainer = document.getElementById('auth-container'), mainAuthButton = document.getElementById('mainAuthButton');
-        const weekSelect = document.getElementById('week-select'), editorModal = document.getElementById('schedule-editor-modal');
-        const scheduleTextarea = document.getElementById('scheduleTextarea'), editorTitle = document.getElementById('editor-title');
-        const savedNotesList = document.getElementById('savedNotesList'), userEmailNotes = document.getElementById('userEmailNotes');
-        const menuLogout = document.getElementById('menu-logout'), hwList = document.getElementById('hw-list');
-        const gradesList = document.getElementById('grades-list'), plannerList = document.getElementById('planner-list');
-        const achievementsList = document.getElementById('achievements-list'), userPointsSpan = document.getElementById('user-points');
-        const translateResult = document.getElementById('translate-result'), translatorHistoryList = document.getElementById('translatorHistoryList');
-        const aiResult = document.getElementById('ai-result'), focusTimer = document.getElementById('focus-timer');
+    function renderAll() { renderSchedule(); renderHomework(); renderNotes(); renderGrades(); updateSubjectAverages(); renderPlanner(); renderAchievements(); document.getElementById('user-points').textContent = points; }
+    function clearInputs(ids) { ids.forEach(id => document.getElementById(id).value = ''); }
 
-        // UI
-        function toggleSidebar() { navSidebar.classList.toggle('open'); overlay.style.display = navSidebar.classList.contains('open') ? 'block' : 'none'; }
-        function showView(id) { document.querySelectorAll('.content-view').forEach(v => v.classList.remove('active')); document.getElementById(id).classList.add('active'); document.querySelectorAll('.sidebar-item').forEach(i => i.classList.remove('active')); document.getElementById(`menu-${id.replace('-view','')}`).classList.add('active'); toggleSidebar(); }
-        window.openScheduleEditor = day => { currentDayToEdit = day; editorTitle.textContent = `Редактирование: ${day}`; scheduleTextarea.value = scheduleData[currentWeek][day] || ''; editorModal.style.display = 'block'; overlay.style.display = 'block'; overlay.style.zIndex = 2500; };
-        function closeScheduleEditor() { editorModal.style.display = 'none'; overlay.style.zIndex = 98; overlay.style.display = navSidebar.classList.contains('open') ? 'block' : 'none'; }
+    function addPoints(p) { points += p; document.getElementById('user-points').textContent = points; if (auth.currentUser) db.collection('users').doc(auth.currentUser.uid).set({points}, {merge:true}); }
 
-        // Schedule UI
-        function renderSchedule() {
-            const container = document.getElementById('schedule-content'); container.innerHTML = '';
-            DAYS.forEach(day => {
-                const div = document.createElement('div'); div.className = 'day-section'; div.dataset.day = day;
-                div.innerHTML = `<h2 class="day-title">${day}</h2><button class="edit-btn" onclick="openScheduleEditor('${day}')">Редактировать</button>
-                    <div class="${scheduleData[currentWeek][day] ? '' : 'schedule-placeholder'}"><p id="schedule-${day}">${scheduleData[currentWeek][day] ? scheduleData[currentWeek][day].replace(/\\n/g,'<br>') : 'Расписание не заполнено'}</p></div>`;
-                container.appendChild(div);
-            });
-        }
-
-        // Data Load
-        function loadData(user) {
-            db.collection("artifacts").doc(user.uid).onSnapshot(doc => {
-                scheduleData = doc.data()?.schedule || {week1:{},week2:{}}; renderSchedule();
-                achievementsData = doc.data()?.achievements || []; userPoints = doc.data()?.points || 0;
-                renderAchievements(); userPointsSpan.textContent = userPoints;
-            });
-            db.collection("artifacts").doc(user.uid).collection("notes").orderBy("createdAt","desc").onSnapshot(s => { notesData = s.docs.map(d => ({id:d.id,...d.data()})); renderNotes(); });
-            db.collection("artifacts").doc(user.uid).collection("tasks").orderBy("deadline").onSnapshot(s => { homeworkData = s.docs.map(d => ({id:d.id,...d.data()})); renderHomework(); checkAchievements(); });
-            db.collection("artifacts").doc(user.uid).collection("grades").orderBy("date","desc").onSnapshot(s => { gradesData = s.docs.map(d => ({id:d.id,...d.data()})); renderGrades(); updateChart(); });
-            db.collection("artifacts").doc(user.uid).collection("planner").onSnapshot(s => { plannerData = s.docs.map(d => ({id:d.id,...d.data()})); renderPlanner(); });
-        }
-
-        // Render Functions
-        function renderNotes(filter=notesData) { /* ... same as before */ }
-        function renderHomework() { /* ... */ }
-        function renderGrades() { /* ... */ }
-        function updateChart() { /* ... */ }
-        function renderPlanner() { /* ... */ }
-        function renderAchievements() { /* ... */ }
-
-        // Auth
-        auth.onAuthStateChanged(user => {
-            if (user) {
-                mainAuthButton.textContent = 'Выйти'; menuLogout.style.display = 'block'; userEmailNotes.textContent = user.email;
-                loadData(user);
-            } else {
-                mainAuthButton.textContent = 'Войти / Регистрация'; menuLogout.style.display = 'none'; userEmailNotes.textContent = 'Аноним';
-                scheduleData = {week1:{},week2:{}}; renderSchedule();
-            }
-            mainAuthButton.style.display = 'block'; authContainer.style.display = 'none';
-        });
-
-        // Event Listeners
-        menuIcon.onclick = toggleSidebar; overlay.onclick = toggleSidebar;
-        document.getElementById('saveScheduleEdit').onclick = async () => {
-            scheduleData[currentWeek][currentDayToEdit] = scheduleTextarea.value;
-            renderSchedule(); closeScheduleEditor();
-            if (auth.currentUser) await db.collection("artifacts").doc(auth.currentUser.uid).set({schedule: scheduleData}, {merge:true});
-        };
-        weekSelect.onchange = e => { currentWeek = e.target.value; renderSchedule(); };
-        // ... остальные обработчики (переводчик, заметки, ДЗ, AI и т.д.)
-
-        renderSchedule(); showView('schedule-view');
-    </script>
+    renderSchedule(); renderAchievements();
+  </script>
 </body>
 </html>
