@@ -1,7 +1,7 @@
 {
   "name": "Neuron Study",
   "short_name": "Neuron",
-  "description": "Умный помощник для учёбы с оффлайн-доступом и синхронизацией",
+  "description": "Умный помощник для учёбы с оффлайн-доступом",
   "start_url": "/?source=pwa",
   "scope": "/",
   "display": "standalone",
