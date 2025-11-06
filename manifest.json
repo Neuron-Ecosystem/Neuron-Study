@@ -11,32 +11,16 @@
   "id": "/?homescreen=1",
   "icons": [
     {
-      "src": "https://raw.githubusercontent.com/neuron-ecosystem/neuron-study/main/favicon-192x192.png",
+      "src": "/favicon-192x192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "maskable any"
     },
     {
-      "src": "https://raw.githubusercontent.com/neuron-ecosystem/neuron-study/main/favicon-512x512.png",
+      "src": "/favicon-512x512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable any"
-    }
-  ],
-  "screenshots": [
-    {
-      "src": "https://raw.githubusercontent.com/neuron-ecosystem/neuron-study/main/screenshot-wide.png",
-      "sizes": "1280x720",
-      "type": "image/png",
-      "form_factor": "wide",
-      "label": "Neuron Study на компьютере"
-    },
-    {
-      "src": "https://raw.githubusercontent.com/neuron-ecosystem/neuron-study/main/screenshot-narrow.png",
-      "sizes": "750x1334",
-      "type": "image/png",
-      "form_factor": "narrow",
-      "label": "Neuron Study на телефоне"
     }
   ]
 }
