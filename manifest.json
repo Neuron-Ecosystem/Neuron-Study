@@ -1,14 +1,12 @@
 {
-    "name": "Neuron Study",
-    "short_name": "NeuronStudy",
-    "description": "Персональный помощник для учёбы",
-    "start_url": "/index.html",
-    "display": "standalone",
-    "orientation": "portrait",
-    "background_color": "#0f0f2a",
-    "theme_color": "#6366f1",
-    "icons": [
-        {"src": "favicon-192x192.png", "sizes": "192x192", "type": "image/png"},
-        {"src": "favicon-512x512.png", "sizes": "512x512", "type": "image/png"}
-    ]
+  "name": "Neuron Study",
+  "short_name": "Neuron",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0f0f2a",
+  "theme_color": "#6366f1",
+  "icons": [
+    { "src": "favicon-192x192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "favicon-512x512.png", "sizes": "512x512", "type": "image/png" }
+  ]
 }
