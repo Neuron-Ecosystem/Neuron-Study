@@ -457,5 +457,41 @@
 
     renderSchedule(); renderAchievements();
   </script>
+  <script>
+  let deferredPrompt;
+  const installBtn = document.createElement('button');
+  installBtn.style.display = 'none';
+  installBtn.textContent = 'Установить';
+  installBtn.style.position = 'fixed';
+  installBtn.style.bottom = '20px';
+  installBtn.style.right = '20px';
+  installBtn.style.padding = '12px 20px';
+  installBtn.style.background = '#6366f1';
+  installBtn.style.color = 'white';
+  installBtn.style.border = 'none';
+  installBtn.style.borderRadius = '12px';
+  installBtn.style.boxShadow = '0 4px 15px rgba(99,102,241,.5)';
+  installBtn.style.zIndex = '10000';
+  installBtn.style.cursor = 'pointer';
+  document.body.appendChild(installBtn);
+
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+    installBtn.style.display = 'block';
+    installBtn.onclick = () => {
+      installBtn.style.display = 'none';
+      deferredPrompt.prompt();
+      deferredPrompt.userChoice.then(() => {
+        deferredPrompt = null;
+      });
+    };
+  });
+
+  window.addEventListener('appinstalled', () => {
+    installBtn.style.display = 'none';
+    showToast('Приложение установлено!');
+  });
+</script>
 </body>
 </html>
