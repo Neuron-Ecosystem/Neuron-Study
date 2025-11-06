@@ -1,10 +1,5 @@
-// sw.js
 const CACHE_NAME = 'neuron-study-v1';
-const CORE_ASSETS = [
-  '/',
-  '/index.html',
-  '/manifest.json'
-];
+const CORE_ASSETS = ['/', '/index.html', '/manifest.json'];
 
 self.addEventListener('install', event => {
   event.waitUntil(
