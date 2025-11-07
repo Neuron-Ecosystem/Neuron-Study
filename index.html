@@ -896,5 +896,147 @@
       renderAchievements();
     });
   </script>
+  <script>
+// PWA Install Prompt
+let deferredPrompt;
+const installButton = document.createElement('button');
+
+// Создаем кнопку установки
+function createInstallButton() {
+  installButton.innerHTML = '<i class="fas fa-download"></i> Установить приложение';
+  installButton.style.cssText = `
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: linear-gradient(45deg, var(--p), var(--pd));
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 25px;
+    cursor: pointer;
+    font-weight: 600;
+    box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4);
+    z-index: 10000;
+    display: none;
+    animation: slideUp 0.3s ease-out;
+  `;
+  
+  installButton.onclick = installPWA;
+  document.body.appendChild(installButton);
+}
+
+// Обработчик события beforeinstallprompt
+window.addEventListener('beforeinstallprompt', (e) => {
+  console.log('PWA: beforeinstallprompt event fired');
+  
+  // Предотвращаем автоматическое отображение prompt'а
+  e.preventDefault();
+  
+  // Сохраняем событие для использования позже
+  deferredPrompt = e;
+  
+  // Показываем нашу кастомную кнопку установки
+  showInstallPromotion();
+  
+  // Автоматически показываем предложение через 5 секунд после загрузки
+  setTimeout(() => {
+    if (deferredPrompt && !isAppInstalled()) {
+      showInstallPromotion();
+    }
+  }, 5000);
+});
+
+// Показываем предложение установки
+function showInstallPromotion() {
+  if (!deferredPrompt || isAppInstalled()) return;
+  
+  installButton.style.display = 'block';
+  
+  // Автоматически скрываем через 10 секунд
+  setTimeout(() => {
+    installButton.style.display = 'none';
+  }, 10000);
+}
+
+// Установка PWA
+async function installPWA() {
+  if (!deferredPrompt) return;
+  
+  // Показываем встроенный prompt установки
+  deferredPrompt.prompt();
+  
+  // Ждем ответ пользователя
+  const { outcome } = await deferredPrompt.userChoice;
+  
+  console.log(`PWA: User response to install prompt - ${outcome}`);
+  
+  // Очищаем сохраненное событие
+  deferredPrompt = null;
+  
+  // Скрываем нашу кнопку
+  installButton.style.display = 'none';
+}
+
+// Проверяем, установлено ли приложение
+function isAppInstalled() {
+  return window.matchMedia('(display-mode: standalone)').matches || 
+         window.navigator.standalone === true;
+}
+
+// Отслеживаем изменение режима отображения
+window.addEventListener('appinstalled', (e) => {
+  console.log('PWA: App installed successfully');
+  installButton.style.display = 'none';
+  deferredPrompt = null;
+  
+  // Показываем сообщение об успешной установке
+  showToast('Приложение успешно установлено! 🎉');
+});
+
+// Проверяем, является ли приложение PWA
+function checkPWAStatus() {
+  if (isAppInstalled()) {
+    console.log('PWA: App is running in standalone mode');
+  } else {
+    console.log('PWA: App is running in browser');
+  }
+}
+
+// Инициализация PWA функционала
+document.addEventListener('DOMContentLoaded', () => {
+  createInstallButton();
+  checkPWAStatus();
+  
+  // Добавляем стили для анимации
+  const style = document.createElement('style');
+  style.textContent = `
+    @keyframes slideUp {
+      from {
+        opacity: 0;
+        transform: translateX(-50%) translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+      }
+    }
+    
+    @media (max-width: 768px) {
+      button[style*="bottom: 20px"] {
+        bottom: 70px !important;
+      }
+    }
+  `;
+  document.head.appendChild(style);
+});
+
+// Проверка поддержки PWA
+if ('serviceWorker' in navigator && 'BeforeInstallPromptEvent' in window) {
+  console.log('PWA: Full support detected');
+} else {
+  console.log('PWA: Limited support - some features may not work');
+}
+</script>
 </body>
 </html>
