@@ -1038,5 +1038,22 @@ if ('serviceWorker' in navigator && 'BeforeInstallPromptEvent' in window) {
   console.log('PWA: Limited support - some features may not work');
 }
 </script>
+  <script>
+// Диагностика PWA
+console.log('PWA Диагностика:');
+console.log('Service Worker support:', 'serviceWorker' in navigator);
+console.log('BeforeInstallPrompt support:', 'BeforeInstallPromptEvent' in window);
+console.log('Display mode:', window.matchMedia('(display-mode: standalone)').matches ? 'standalone' : 'browser');
+
+// Проверка манифеста
+const manifestLink = document.querySelector('link[rel="manifest"]');
+if (manifestLink) {
+    console.log('Manifest found:', manifestLink.href);
+    fetch(manifestLink.href)
+        .then(response => response.json())
+        .then(manifest => console.log('Manifest content:', manifest))
+        .catch(err => console.error('Manifest error:', err));
+}
+</script>
 </body>
 </html>
