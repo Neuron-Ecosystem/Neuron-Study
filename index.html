@@ -76,6 +76,21 @@
     .subject-avg {display:flex;flex-wrap:wrap;gap:8px;margin-top:16px;justify-content:center;}
     @media (max-width:600px) {.header h1{font-size:1.2rem}.edit-btn{position:static;display:block;width:100%;margin-top:12px;border-radius:8px}.nav-auth-btn{font-size:.75rem;padding:6px 10px}#auth-container{padding:24px}}
   </style>
+  <script>
+  // Регистрация Service Worker'а
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/sw.js')
+        .then(registration => {
+          console.log('Service Worker registered with scope:', registration.scope);
+        })
+        .catch(error => {
+          console.error('Service Worker registration failed:', error);
+        });
+    });
+  }
+</script>
+
 </head>
 <body>
   <header class="header">
