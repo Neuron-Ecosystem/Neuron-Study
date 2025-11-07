@@ -1,7 +1,7 @@
 {
   "name": "Neuron Study",
-  "short_name": "Neuron",
-  "description": "Умный помощник для учёбы с оффлайн-доступом",
+  "short_name": "Neuron Study",
+  "description": "Умный помощник для учёбы с оффлайн-доступом и синхронизацией",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
@@ -23,6 +23,33 @@
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable any"
+    },
+    {
+      "src": "/favicon-180x180.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/favicon-32x32.png",
+      "sizes": "32x32",
+      "type": "image/png"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/screenshots/desktop.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Главный экран Neuron Study"
+    },
+    {
+      "src": "/screenshots/mobile.png",
+      "sizes": "390x844",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Мобильный вид приложения"
     }
   ]
 }
