@@ -1,7 +1,7 @@
 {
   "name": "Neuron Study",
   "short_name": "NeuronStudy",
-  "description": "Умный помощник для учёбы",
+  "description": "Умный помощник для учёбы с оффлайн-доступом",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
@@ -9,6 +9,7 @@
   "theme_color": "#6366f1",
   "orientation": "any",
   "categories": ["education", "productivity"],
+  "lang": "ru",
   "icons": [
     {
       "src": "/icon-192.png",
