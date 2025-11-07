@@ -1,4 +1,4 @@
-const CACHE_NAME = 'neuron-study-v2';
+const CACHE_NAME = 'neuron-study-v3';
 const CORE_ASSETS = [
   '/',
   '/index.html',
@@ -21,6 +21,9 @@ self.addEventListener('install', event => {
         console.log('Service Worker: Кэширование основных ресурсов');
         return cache.addAll(CORE_ASSETS);
       })
+      .then(() => {
+        console.log('Service Worker: Все ресурсы закэшированы');
+      })
       .catch(error => {
         console.error('Service Worker: Ошибка кэширования', error);
       })
@@ -41,20 +44,20 @@ self.addEventListener('activate', event => {
           }
         })
       );
+    }).then(() => {
+      console.log('Service Worker: Активирован');
+      return self.clients.claim();
     })
   );
-  
-  self.clients.claim();
 });
 
 // Обработка запросов
 self.addEventListener('fetch', event => {
   const { request } = event;
   
-  // Пропускаем не-GET запросы
   if (request.method !== 'GET') return;
   
-  // Пропускаем запросы к Firebase (они должны быть онлайн)
+  // Пропускаем запросы к Firebase
   if (request.url.includes('firebase') || request.url.includes('googleapis')) {
     return;
   }
@@ -75,7 +78,6 @@ self.addEventListener('fetch', event => {
               const responseToCache = networkResponse.clone();
               caches.open(CACHE_NAME)
                 .then(cache => {
-                  // Используем URL без параметров для кэширования
                   const cacheUrl = new URL(request.url);
                   cache.put(cacheUrl.pathname, responseToCache);
                 });
@@ -96,9 +98,42 @@ self.addEventListener('fetch', event => {
   );
 });
 
-// Фоновая синхронизация (для будущего использования)
-self.addEventListener('sync', event => {
-  if (event.tag === 'background-sync') {
-    console.log('Service Worker: Фоновая синхронизация');
+// Обработка push-уведомлений
+self.addEventListener('push', event => {
+  if (!event.data) return;
+  
+  const data = event.data.json();
+  const options = {
+    body: data.body || 'Новое уведомление от Neuron Study',
+    icon: '/favicon-192x192.png',
+    badge: '/favicon-32x32.png',
+    vibrate: [100, 50, 100],
+    data: {
+      url: data.url || '/'
+    },
+    actions: [
+      {
+        action: 'open',
+        title: 'Открыть'
+      },
+      {
+        action: 'close',
+        title: 'Закрыть'
+      }
+    ]
+  };
+
+  event.waitUntil(
+    self.registration.showNotification(data.title || 'Neuron Study', options)
+  );
+});
+
+self.addEventListener('notificationclick', event => {
+  event.notification.close();
+  
+  if (event.action === 'open') {
+    event.waitUntil(
+      clients.openWindow(event.notification.data.url)
+    );
   }
 });
