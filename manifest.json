@@ -9,6 +9,8 @@
   "theme_color": "#6366f1",
   "orientation": "portrait-primary",
   "id": "/",
+  "categories": ["education", "productivity"],
+  "lang": "ru",
   "icons": [
     {
       "src": "/favicon-192x192.png",
