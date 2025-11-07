@@ -6,9 +6,9 @@
   <link rel="manifest" href="/manifest.json">
   <meta name="theme-color" content="#6366f1">
   <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black">
-<meta name="apple-mobile-web-app-title" content="Мое PWA">
-<link rel="apple-touch-icon" href="/images/icons/icon-152x152.png">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="apple-mobile-web-app-title" content="Мое PWA">
+  <link rel="apple-touch-icon" href="/images/icons/icon-152x152.png">
 
   <title>Neuron Study</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/all.min.css">
@@ -217,215 +217,684 @@
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
 
   <script>
-    const firebaseConfig = { apiKey: "AIzaSyDOaDVzzPjyYm4HWMND2XYWjLy_h4wty5s", authDomain: "neuron-ecosystem-2025.firebaseapp.com", projectId: "neuron-ecosystem-2025", storageBucket: "neuron-ecosystem-2025.firebasestorage.app", messagingSenderId: "589834476565", appId: "1:589834476565:web:c9c878a905ecece4dd421c" };
+    const firebaseConfig = { 
+      apiKey: "AIzaSyDOaDVzzPjyYm4HWMND2XYWjLy_h4wty5s", 
+      authDomain: "neuron-ecosystem-2025.firebaseapp.com", 
+      projectId: "neuron-ecosystem-2025", 
+      storageBucket: "neuron-ecosystem-2025.firebasestorage.app", 
+      messagingSenderId: "589834476565", 
+      appId: "1:589834476565:web:c9c878a905ecece4dd421c" 
+    };
+    
+    // Инициализация Firebase
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
     const db = firebase.firestore();
+    
+    // Настройка провайдера Google
+    const googleProvider = new firebase.auth.GoogleAuthProvider();
+    googleProvider.addScope('email');
+    googleProvider.addScope('profile');
 
+    // Инициализация Service Worker
     if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/sw.js').then(reg => console.log('SW registered')).catch(err => console.error('SW failed', err));
+      window.addEventListener('load', async () => {
+        try {
+          const registration = await navigator.serviceWorker.register('/sw.js');
+          console.log('Service Worker зарегистрирован:', registration);
+        } catch (error) {
+          console.error('Ошибка регистрации Service Worker:', error);
+        }
       });
     }
 
-    const menuIcon = document.getElementById('menuIcon'), sidebar = document.getElementById('navSidebar'), overlay = document.getElementById('overlay');
-    const authModal = document.getElementById('auth-container'), mainAuthBtn = document.getElementById('mainAuthButton');
+    // DOM элементы
+    const menuIcon = document.getElementById('menuIcon');
+    const sidebar = document.getElementById('navSidebar');
+    const overlay = document.getElementById('overlay');
+    const authModal = document.getElementById('auth-container');
+    const mainAuthBtn = document.getElementById('mainAuthButton');
     const logoutBtn = document.getElementById('menu-logout');
 
-    menuIcon.onclick = () => { sidebar.classList.toggle('open'); overlay.style.display = sidebar.classList.contains('open') ? 'block' : 'none'; };
-    overlay.onclick = () => { sidebar.classList.remove('open'); overlay.style.display = 'none'; authModal.style.display = 'none'; document.getElementById('schedule-editor').style.display = 'none'; };
+    // Переменные приложения
+    const DAYS = ["Понедельник","Вторник","Среда","Четверг","Пятница","Суббота","Воскресенье"];
+    let schedule = {};
+    let homework = [];
+    let notes = [];
+    let grades = [];
+    let planner = [];
+    let points = 0;
+    let achievements = [];
+    let gradesChart = null;
 
-    document.querySelectorAll('.sidebar-item[data-view]').forEach(item => {
-      item.onclick = () => {
-        document.querySelectorAll('.content-view').forEach(v => v.classList.remove('active'));
-        document.getElementById(item.dataset.view + '-view').classList.add('active');
-        document.querySelectorAll('.sidebar-item').forEach(i => i.classList.remove('active'));
-        item.classList.add('active');
-        sidebar.classList.remove('open'); overlay.style.display = 'none';
+    // Инициализация интерфейса
+    function initUI() {
+      // Навигация
+      menuIcon.onclick = () => {
+        sidebar.classList.toggle('open');
+        overlay.style.display = sidebar.classList.contains('open') ? 'block' : 'none';
       };
+
+      overlay.onclick = () => {
+        sidebar.classList.remove('open');
+        overlay.style.display = 'none';
+        authModal.style.display = 'none';
+        document.getElementById('schedule-editor').style.display = 'none';
+      };
+
+      // Переключение вкладок
+      document.querySelectorAll('.sidebar-item[data-view]').forEach(item => {
+        item.onclick = () => {
+          document.querySelectorAll('.content-view').forEach(v => v.classList.remove('active'));
+          document.getElementById(item.dataset.view + '-view').classList.add('active');
+          document.querySelectorAll('.sidebar-item').forEach(i => i.classList.remove('active'));
+          item.classList.add('active');
+          sidebar.classList.remove('open');
+          overlay.style.display = 'none';
+        };
+      });
+
+      // Аутентификация
+      mainAuthBtn.onclick = () => {
+        if (auth.currentUser) {
+          auth.signOut();
+        } else {
+          authModal.style.display = 'block';
+          overlay.style.display = 'block';
+        }
+      };
+
+      document.getElementById('close-auth').onclick = () => {
+        authModal.style.display = 'none';
+        overlay.style.display = 'none';
+      };
+
+      document.getElementById('register').onclick = handleEmailRegister;
+      document.getElementById('login').onclick = handleEmailLogin;
+      document.getElementById('google').onclick = handleGoogleAuth;
+      logoutBtn.onclick = () => auth.signOut();
+
+      // Обработчики форм
+      document.getElementById('add-hw').onclick = addHomework;
+      document.getElementById('save-note').onclick = addNote;
+      document.getElementById('add-grade').onclick = addGrade;
+      document.getElementById('add-planner').onclick = addPlanner;
+      document.getElementById('save-schedule').onclick = saveSchedule;
+      document.getElementById('cancel-schedule').onclick = cancelSchedule;
+
+      // Быстрые клавиши для форм
+      initQuickSubmit();
+    }
+
+    // Инициализация быстрого отправления форм по Enter
+    function initQuickSubmit() {
+      const forms = [
+        { inputs: ['hw-subject', 'hw-title', 'hw-deadline'], button: 'add-hw' },
+        { inputs: ['note-subject', 'note-title', 'note-content'], button: 'save-note' },
+        { inputs: ['grade-subject', 'grade-value', 'grade-date'], button: 'add-grade' },
+        { inputs: ['planner-goal', 'planner-deadline'], button: 'add-planner' }
+      ];
+
+      forms.forEach(form => {
+        form.inputs.forEach(inputId => {
+          const input = document.getElementById(inputId);
+          if (input) {
+            input.addEventListener('keypress', (e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                document.getElementById(form.button).click();
+              }
+            });
+          }
+        });
+      });
+    }
+
+    // Обработчики аутентификации
+    async function handleEmailRegister() {
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+      
+      if (!email || !password) {
+        showToast('Введите email и пароль');
+        return;
+      }
+
+      if (password.length < 6) {
+        showToast('Пароль должен быть не менее 6 символов');
+        return;
+      }
+
+      try {
+        showToast('Регистрация...');
+        await auth.createUserWithEmailAndPassword(email, password);
+        showToast('Регистрация успешна!');
+        authModal.style.display = 'none';
+        overlay.style.display = 'none';
+      } catch (error) {
+        console.error('Ошибка регистрации:', error);
+        showToast(getAuthErrorMessage(error));
+      }
+    }
+
+    async function handleEmailLogin() {
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+      
+      if (!email || !password) {
+        showToast('Введите email и пароль');
+        return;
+      }
+
+      try {
+        showToast('Вход...');
+        await auth.signInWithEmailAndPassword(email, password);
+        showToast('Вход выполнен!');
+        authModal.style.display = 'none';
+        overlay.style.display = 'none';
+      } catch (error) {
+        console.error('Ошибка входа:', error);
+        showToast(getAuthErrorMessage(error));
+      }
+    }
+
+    async function handleGoogleAuth() {
+      try {
+        showToast('Вход через Google...');
+        await auth.signInWithPopup(googleProvider);
+        showToast('Вход выполнен!');
+        authModal.style.display = 'none';
+        overlay.style.display = 'none';
+      } catch (error) {
+        console.error('Ошибка Google аутентификации:', error);
+        showToast(getAuthErrorMessage(error));
+      }
+    }
+
+    function getAuthErrorMessage(error) {
+      const messages = {
+        'auth/email-already-in-use': 'Email уже используется',
+        'auth/invalid-email': 'Неверный формат email',
+        'auth/operation-not-allowed': 'Опция регистрации отключена',
+        'auth/weak-password': 'Пароль слишком слабый',
+        'auth/user-disabled': 'Аккаунт отключен',
+        'auth/user-not-found': 'Пользователь не найден',
+        'auth/wrong-password': 'Неверный пароль',
+        'auth/popup-closed-by-user': 'Окно аутентификации закрыто',
+        'auth/cancelled-popup-request': 'Запрос отменен',
+        'auth/popup-blocked': 'Всплывающее окно заблокировано'
+      };
+      
+      return messages[error.code] || `Ошибка: ${error.message}`;
+    }
+
+    // Мониторинг состояния аутентификации
+    auth.onAuthStateChanged(async (user) => {
+      if (user) {
+        mainAuthBtn.textContent = 'Выйти';
+        logoutBtn.style.display = 'block';
+        showToast(`Добро пожаловать, ${user.displayName || user.email}!`);
+        await loadUserData(user.uid);
+      } else {
+        mainAuthBtn.textContent = 'Войти';
+        logoutBtn.style.display = 'none';
+        resetLocalData();
+        renderAll();
+      }
     });
 
-    const DAYS = ["Понедельник","Вторник","Среда","Четверг","Пятница","Суббота","Воскресенье"];
-    let schedule = {}, homework = [], notes = [], grades = [], planner = [], points = 0, achievements = [];
+    // Загрузка данных пользователя
+    async function loadUserData(uid) {
+      try {
+        showToast('Загрузка данных...');
+        
+        // Загрузка основных данных пользователя
+        const userDoc = await db.collection('users').doc(uid).get();
+        if (userDoc.exists) {
+          const data = userDoc.data();
+          schedule = data.schedule || {};
+          points = data.points || 0;
+          achievements = data.achievements || [];
+        }
 
+        // Параллельная загрузка коллекций
+        const [hwSnapshot, notesSnapshot, gradesSnapshot, plannerSnapshot] = await Promise.all([
+          db.collection('users').doc(uid).collection('homework').get(),
+          db.collection('users').doc(uid).collection('notes').get(),
+          db.collection('users').doc(uid).collection('grades').get(),
+          db.collection('users').doc(uid).collection('planner').get()
+        ]);
+
+        homework = hwSnapshot.docs.map(doc => ({ id: parseInt(doc.id), ...doc.data() }));
+        notes = notesSnapshot.docs.map(doc => ({ id: parseInt(doc.id), ...doc.data() }));
+        grades = gradesSnapshot.docs.map(doc => ({ id: parseInt(doc.id), ...doc.data() }));
+        planner = plannerSnapshot.docs.map(doc => ({ id: parseInt(doc.id), ...doc.data() }));
+
+        renderAll();
+        showToast('Данные загружены!');
+        
+        // Установка реальных слушателей для обновлений в реальном времени
+        setupRealtimeListeners(uid);
+        
+      } catch (error) {
+        console.error('Ошибка загрузки данных:', error);
+        showToast('Ошибка загрузки данных');
+      }
+    }
+
+    function setupRealtimeListeners(uid) {
+      // Слушатели для обновлений в реальном времени
+      const collections = ['homework', 'notes', 'grades', 'planner'];
+      
+      collections.forEach(col => {
+        db.collection('users').doc(uid).collection(col)
+          .onSnapshot(snapshot => {
+            window[col] = snapshot.docs.map(doc => ({ id: parseInt(doc.id), ...doc.data() }));
+            eval(`render${col.charAt(0).toUpperCase() + col.slice(1)}()`);
+            if (col === 'grades') updateSubjectAverages();
+          });
+      });
+
+      // Слушатель для основных данных пользователя
+      db.collection('users').doc(uid)
+        .onSnapshot(doc => {
+          if (doc.exists) {
+            const data = doc.data();
+            schedule = data.schedule || {};
+            points = data.points || 0;
+            achievements = data.achievements || [];
+            renderSchedule();
+            document.getElementById('user-points').textContent = points;
+            renderAchievements();
+          }
+        });
+    }
+
+    function resetLocalData() {
+      schedule = {};
+      homework = [];
+      notes = [];
+      grades = [];
+      planner = [];
+      points = 0;
+      achievements = [];
+    }
+
+    // Функции рендеринга и управления данными
     function renderSchedule() {
-      const c = document.getElementById('schedule-content'); c.innerHTML = '';
+      const c = document.getElementById('schedule-content'); 
+      c.innerHTML = '';
       DAYS.forEach(d => {
-        const div = document.createElement('div'); div.className = 'card day-section';
-        div.innerHTML = `<h3 class="day-title">${d}</h3><button class="edit-btn" onclick="editDay('${d}')">Редактировать</button><div style="margin-top:50px;white-space:pre-line;font-size:1rem;line-height:1.6">${schedule[d] ? schedule[d].replace(/\\n/g,'<br>') : '<p class="empty-state"><i class="far fa-calendar-alt"></i><br>Пусто</p>'}</div>`;
+        const div = document.createElement('div'); 
+        div.className = 'card day-section';
+        div.innerHTML = `
+          <h3 class="day-title">${d}</h3>
+          <button class="edit-btn" onclick="editDay('${d}')">Редактировать</button>
+          <div style="margin-top:50px;white-space:pre-line;font-size:1rem;line-height:1.6">
+            ${schedule[d] ? schedule[d].replace(/\\n/g,'<br>') : '<p class="empty-state"><i class="far fa-calendar-alt"></i><br>Пусто</p>'}
+          </div>
+        `;
         c.appendChild(div);
       });
     }
+
     window.editDay = d => {
       document.getElementById('editor-day').textContent = d;
       document.getElementById('editor-text').value = schedule[d] || '';
       document.getElementById('schedule-editor').style.display = 'block';
       overlay.style.display = 'block';
     };
-    document.getElementById('save-schedule').onclick = () => {
+
+    function saveSchedule() {
       const d = document.getElementById('editor-day').textContent;
       schedule[d] = document.getElementById('editor-text').value;
       renderSchedule();
       document.getElementById('schedule-editor').style.display = 'none';
       overlay.style.display = 'none';
-      if (auth.currentUser) db.collection('users').doc(auth.currentUser.uid).set({schedule}, {merge:true});
-    };
-    document.getElementById('cancel-schedule').onclick = () => { document.getElementById('schedule-editor').style.display = 'none'; overlay.style.display = 'none'; };
+      if (auth.currentUser) {
+        db.collection('users').doc(auth.currentUser.uid).set({schedule}, {merge:true});
+      }
+    }
 
-    document.getElementById('add-hw').onclick = () => {
-      const s = document.getElementById('hw-subject').value.trim(), t = document.getElementById('hw-title').value.trim(), dl = document.getElementById('hw-deadline').value;
-      if (!s || !t || !dl) return alert('Заполните все поля');
+    function cancelSchedule() { 
+      document.getElementById('schedule-editor').style.display = 'none'; 
+      overlay.style.display = 'none'; 
+    }
+
+    function addHomework() {
+      const s = document.getElementById('hw-subject').value.trim();
+      const t = document.getElementById('hw-title').value.trim();
+      const dl = document.getElementById('hw-deadline').value;
+      
+      if (!s || !t || !dl) {
+        showToast('Заполните все поля');
+        return;
+      }
+      
       const task = {id:Date.now(), subject:s, title:t, deadline:dl};
-      homework.push(task); renderHomework(); addPoints(5); checkAchievements();
+      homework.push(task); 
+      renderHomework(); 
+      addPoints(5); 
+      checkAchievements();
       clearInputs(['hw-subject','hw-title','hw-deadline']);
-      if (auth.currentUser) db.collection('users').doc(auth.currentUser.uid).collection('homework').doc(task.id.toString()).set(task);
-    };
+      
+      if (auth.currentUser) {
+        db.collection('users').doc(auth.currentUser.uid).collection('homework').doc(task.id.toString()).set(task);
+      }
+    }
+
     function renderHomework() {
-      const l = document.getElementById('hw-list'); l.innerHTML = '';
+      const l = document.getElementById('hw-list'); 
+      l.innerHTML = '';
       homework.sort((a,b) => a.deadline.localeCompare(b.deadline)).forEach(t => {
-        const div = document.createElement('div'); div.className = 'card';
-        div.innerHTML = `<div class="task-item"><div><div class="task-title">${t.title}</div><div class="task-meta">${t.subject} • ${new Date(t.deadline).toLocaleDateString()}</div></div><button class="delete-btn btn" onclick="deleteTask(${t.id})">×</button></div>`;
+        const div = document.createElement('div'); 
+        div.className = 'card';
+        div.innerHTML = `
+          <div class="task-item">
+            <div>
+              <div class="task-title">${t.title}</div>
+              <div class="task-meta">${t.subject} • ${new Date(t.deadline).toLocaleDateString()}</div>
+            </div>
+            <button class="delete-btn btn" onclick="deleteTask(${t.id})">×</button>
+          </div>
+        `;
         l.appendChild(div);
       });
     }
-    window.deleteTask = id => { homework = homework.filter(t => t.id !== id); renderHomework(); if (auth.currentUser) db.collection('users').doc(auth.currentUser.uid).collection('homework').doc(id.toString()).delete(); };
 
-    document.getElementById('save-note').onclick = () => {
-      const s = document.getElementById('note-subject').value.trim(), t = document.getElementById('note-title').value.trim(), c = document.getElementById('note-content').value.trim();
-      if (!s || !t || !c) return alert('Заполните все поля');
+    window.deleteTask = id => { 
+      homework = homework.filter(t => t.id !== id); 
+      renderHomework(); 
+      if (auth.currentUser) {
+        db.collection('users').doc(auth.currentUser.uid).collection('homework').doc(id.toString()).delete();
+      }
+    };
+
+    function addNote() {
+      const s = document.getElementById('note-subject').value.trim();
+      const t = document.getElementById('note-title').value.trim();
+      const c = document.getElementById('note-content').value.trim();
+      
+      if (!s || !t || !c) {
+        showToast('Заполните все поля');
+        return;
+      }
+      
       const note = {id:Date.now(), subject:s, title:t, content:c, date:new Date().toISOString()};
-      notes.push(note); renderNotes(); addPoints(3); checkAchievements();
+      notes.push(note); 
+      renderNotes(); 
+      addPoints(3); 
+      checkAchievements();
       clearInputs(['note-subject','note-title','note-content']);
-      if (auth.currentUser) db.collection('users').doc(auth.currentUser.uid).collection('notes').doc(note.id.toString()).set(note);
-    };
+      
+      if (auth.currentUser) {
+        db.collection('users').doc(auth.currentUser.uid).collection('notes').doc(note.id.toString()).set(note);
+      }
+    }
+
     function renderNotes() {
-      const l = document.getElementById('notes-list'); l.innerHTML = '';
+      const l = document.getElementById('notes-list'); 
+      l.innerHTML = '';
       notes.sort((a,b) => b.date.localeCompare(a.date)).forEach(n => {
-        const div = document.createElement('div'); div.className = 'card';
-        div.innerHTML = `<div class="note-item"><div><div class="task-title">${n.title}</div><div class="task-meta">${n.subject} • ${new Date(n.date).toLocaleDateString()}</div></div><button class="delete-btn btn" onclick="deleteNote(${n.id})">×</button></div>`;
+        const div = document.createElement('div'); 
+        div.className = 'card';
+        div.innerHTML = `
+          <div class="note-item">
+            <div>
+              <div class="task-title">${n.title}</div>
+              <div class="task-meta">${n.subject} • ${new Date(n.date).toLocaleDateString()}</div>
+            </div>
+            <button class="delete-btn btn" onclick="deleteNote(${n.id})">×</button>
+          </div>
+        `;
         l.appendChild(div);
       });
     }
-    window.deleteNote = id => { notes = notes.filter(n => n.id !== id); renderNotes(); if (auth.currentUser) db.collection('users').doc(auth.currentUser.uid).collection('notes').doc(id.toString()).delete(); };
 
-    let gradesChart;
-    document.getElementById('add-grade').onclick = () => {
-      const s = document.getElementById('grade-subject').value.trim(), v = parseInt(document.getElementById('grade-value').value), d = document.getElementById('grade-date').value;
-      if (!s || isNaN(v) || v<1 || v>5 || !d) return alert('Проверьте данные');
-      const grade = {id:Date.now(), subject:s, value:v, date:d};
-      grades.push(grade); renderGrades(); updateSubjectAverages(); addPoints(v); checkAchievements();
-      clearInputs(['grade-subject','grade-value','grade-date']);
-      if (auth.currentUser) db.collection('users').doc(auth.currentUser.uid).collection('grades').doc(grade.id.toString()).set(grade);
+    window.deleteNote = id => { 
+      notes = notes.filter(n => n.id !== id); 
+      renderNotes(); 
+      if (auth.currentUser) {
+        db.collection('users').doc(auth.currentUser.uid).collection('notes').doc(id.toString()).delete();
+      }
     };
+
+    function addGrade() {
+      const s = document.getElementById('grade-subject').value.trim();
+      const v = parseInt(document.getElementById('grade-value').value);
+      const d = document.getElementById('grade-date').value;
+      
+      if (!s || isNaN(v) || v<1 || v>5 || !d) {
+        showToast('Проверьте данные');
+        return;
+      }
+      
+      const grade = {id:Date.now(), subject:s, value:v, date:d};
+      grades.push(grade); 
+      renderGrades(); 
+      updateSubjectAverages(); 
+      addPoints(v); 
+      checkAchievements();
+      clearInputs(['grade-subject','grade-value','grade-date']);
+      
+      if (auth.currentUser) {
+        db.collection('users').doc(auth.currentUser.uid).collection('grades').doc(grade.id.toString()).set(grade);
+      }
+    }
+
     function renderGrades() {
-      const l = document.getElementById('grades-list'); l.innerHTML = '';
+      const l = document.getElementById('grades-list'); 
+      l.innerHTML = '';
       grades.sort((a,b) => b.date.localeCompare(a.date)).forEach(g => {
-        const div = document.createElement('div'); div.className = 'card';
-        div.innerHTML = `<div class="grade-item"><div><div class="task-title">${g.subject}</div><div class="task-meta">Оценка: ${g.value} • ${new Date(g.date).toLocaleDateString()}</div></div><button class="delete-btn btn" onclick="deleteGrade(${g.id})">×</button></div>`;
+        const div = document.createElement('div'); 
+        div.className = 'card';
+        div.innerHTML = `
+          <div class="grade-item">
+            <div>
+              <div class="task-title">${g.subject}</div>
+              <div class="task-meta">Оценка: ${g.value} • ${new Date(g.date).toLocaleDateString()}</div>
+            </div>
+            <button class="delete-btn btn" onclick="deleteGrade(${g.id})">×</button>
+          </div>
+        `;
         l.appendChild(div);
       });
       updateChart();
     }
+
     function updateSubjectAverages() {
-      const container = document.getElementById('subject-averages'); container.innerHTML = '';
+      const container = document.getElementById('subject-averages'); 
+      container.innerHTML = '';
       const subjects = {};
-      grades.forEach(g => { if (!subjects[g.subject]) subjects[g.subject] = []; subjects[g.subject].push(g.value); });
+      
+      grades.forEach(g => { 
+        if (!subjects[g.subject]) subjects[g.subject] = []; 
+        subjects[g.subject].push(g.value); 
+      });
+      
       Object.keys(subjects).forEach(sub => {
         const avg = (subjects[sub].reduce((a,b)=>a+b,0)/subjects[sub].length).toFixed(2);
-        const span = document.createElement('span'); span.className = 'avg-grade'; span.textContent = `${sub}: ${avg}`;
+        const span = document.createElement('span'); 
+        span.className = 'avg-grade'; 
+        span.textContent = `${sub}: ${avg}`;
         container.appendChild(span);
       });
-      if (Object.keys(subjects).length === 0) container.innerHTML = '<p style="text-align:center;color:#777">Оценок нет</p>';
+      
+      if (Object.keys(subjects).length === 0) {
+        container.innerHTML = '<p style="text-align:center;color:#777">Оценок нет</p>';
+      }
     }
+
     function updateChart() {
       const ctx = document.getElementById('grades-chart').getContext('2d');
       const subjects = [...new Set(grades.map(g => g.subject))];
       const datasets = subjects.map(sub => {
         const data = grades.filter(g => g.subject === sub).map(g => g.value);
-        return {label: sub, data, borderColor: `hsl(${Math.random()*360}, 70%, 50%)`, tension: 0.3};
+        return {
+          label: sub, 
+          data, 
+          borderColor: `hsl(${Math.random()*360}, 70%, 50%)`, 
+          tension: 0.3
+        };
       });
+      
       if (gradesChart) gradesChart.destroy();
-      gradesChart = new Chart(ctx, {type:'line',data:{labels: [...new Set(grades.map(g => new Date(g.date).toLocaleDateString('ru')))], datasets},options:{responsive:true,scales:{y:{min:1,max:5}}}});
+      
+      gradesChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: [...new Set(grades.map(g => new Date(g.date).toLocaleDateString('ru')))], 
+          datasets
+        },
+        options: {
+          responsive: true,
+          scales: {
+            y: {
+              min: 1,
+              max: 5
+            }
+          }
+        }
+      });
     }
-    window.deleteGrade = id => { grades = grades.filter(g => g.id !== id); renderGrades(); updateSubjectAverages(); if (auth.currentUser) db.collection('users').doc(auth.currentUser.uid).collection('grades').doc(id.toString()).delete(); };
 
-    document.getElementById('add-planner').onclick = () => {
-      const g = document.getElementById('planner-goal').value.trim(), dl = document.getElementById('planner-deadline').value, r = parseInt(document.getElementById('planner-reminder').value);
-      if (!g || !dl) return alert('Укажите цель и дедлайн');
-      const item = {id:Date.now(), goal:g, deadline:dl, reminder:r, progress:0};
-      planner.push(item); renderPlanner(); addPoints(4); checkAchievements();
-      clearInputs(['planner-goal','planner-deadline']);
-      if (auth.currentUser) db.collection('users').doc(auth.currentUser.uid).collection('planner').doc(item.id.toString()).set(item);
+    window.deleteGrade = id => { 
+      grades = grades.filter(g => g.id !== id); 
+      renderGrades(); 
+      updateSubjectAverages(); 
+      if (auth.currentUser) {
+        db.collection('users').doc(auth.currentUser.uid).collection('grades').doc(id.toString()).delete();
+      }
     };
+
+    function addPlanner() {
+      const g = document.getElementById('planner-goal').value.trim();
+      const dl = document.getElementById('planner-deadline').value;
+      const r = parseInt(document.getElementById('planner-reminder').value);
+      
+      if (!g || !dl) {
+        showToast('Укажите цель и дедлайн');
+        return;
+      }
+      
+      const item = {id:Date.now(), goal:g, deadline:dl, reminder:r, progress:0};
+      planner.push(item); 
+      renderPlanner(); 
+      addPoints(4); 
+      checkAchievements();
+      clearInputs(['planner-goal','planner-deadline']);
+      
+      if (auth.currentUser) {
+        db.collection('users').doc(auth.currentUser.uid).collection('planner').doc(item.id.toString()).set(item);
+      }
+    }
+
     function renderPlanner() {
-      const l = document.getElementById('planner-list'); l.innerHTML = '';
+      const l = document.getElementById('planner-list'); 
+      l.innerHTML = '';
       planner.forEach(p => {
-        const div = document.createElement('div'); div.className = 'card';
-        div.innerHTML = `<div><div class="task-title">${p.goal}</div><div class="task-meta">Дедлайн: ${new Date(p.deadline).toLocaleDateString()}</div><div class="progress-bar"><div class="progress-fill" style="width:${p.progress}%"></div></div></div><button class="delete-btn btn" onclick="deletePlanner(${p.id})">×</button>`;
+        const div = document.createElement('div'); 
+        div.className = 'card';
+        div.innerHTML = `
+          <div>
+            <div class="task-title">${p.goal}</div>
+            <div class="task-meta">Дедлайн: ${new Date(p.deadline).toLocaleDateString()}</div>
+            <div class="progress-bar">
+              <div class="progress-fill" style="width:${p.progress}%"></div>
+            </div>
+          </div>
+          <button class="delete-btn btn" onclick="deletePlanner(${p.id})">×</button>
+        `;
         l.appendChild(div);
       });
     }
-    window.deletePlanner = id => { planner = planner.filter(p => p.id !== id); renderPlanner(); if (auth.currentUser) db.collection('users').doc(auth.currentUser.uid).collection('planner').doc(id.toString()).delete(); };
+
+    window.deletePlanner = id => { 
+      planner = planner.filter(p => p.id !== id); 
+      renderPlanner(); 
+      if (auth.currentUser) {
+        db.collection('users').doc(auth.currentUser.uid).collection('planner').doc(id.toString()).delete();
+      }
+    };
 
     const ACHIEVEMENTS = [
       {id:1, title:"Первая заметка", desc:"Создайте свою первую заметку", check:() => notes.length >= 1},
       {id:2, title:"5 ДЗ подряд", desc:"Добавьте 5 домашних заданий", check:() => homework.length >= 5},
       {id:4, title:"Средний балл 5.0", desc:"Достигните среднего балла 5.0 по любому предмету", check:() => {
-        const subs = {}; grades.forEach(g => { if (!subs[g.subject]) subs[g.subject] = []; subs[g.subject].push(g.value); });
+        const subs = {}; 
+        grades.forEach(g => { 
+          if (!subs[g.subject]) subs[g.subject] = []; 
+          subs[g.subject].push(g.value); 
+        });
         return Object.values(subs).some(arr => arr.reduce((a,b)=>a+b,0)/arr.length >= 5);
       }},
       {id:6, title:"Планировщик", desc:"Создайте 3 цели", check:() => planner.length >= 3},
       {id:8, title:"100 очков", desc:"Наберите 100 очков", check:() => points >= 100}
     ];
+
     function renderAchievements() {
-      const l = document.getElementById('achievements-list'); l.innerHTML = '';
+      const l = document.getElementById('achievements-list'); 
+      l.innerHTML = '';
       ACHIEVEMENTS.forEach(a => {
         const completed = achievements.includes(a.id) || a.check();
-        if (completed && !achievements.includes(a.id)) { achievements.push(a.id); showToast(`Достижение: ${a.title}!`); }
-        const div = document.createElement('div'); div.className = `achievement-card ${completed ? 'completed' : ''}`;
+        if (completed && !achievements.includes(a.id)) { 
+          achievements.push(a.id); 
+          showToast(`Достижение: ${a.title}!`); 
+        }
+        const div = document.createElement('div'); 
+        div.className = `achievement-card ${completed ? 'completed' : ''}`;
         div.innerHTML = `<h4>${a.title}</h4><p>${a.desc}</p>`;
         l.appendChild(div);
       });
     }
-    function checkAchievements() { renderAchievements(); if (auth.currentUser) db.collection('users').doc(auth.currentUser.uid).set({achievements}, {merge:true}); }
+
+    function checkAchievements() { 
+      renderAchievements(); 
+      if (auth.currentUser) {
+        db.collection('users').doc(auth.currentUser.uid).set({achievements}, {merge:true});
+      }
+    }
 
     function showToast(msg) {
-      const t = document.createElement('div'); t.className = 'toast'; t.textContent = msg; document.body.appendChild(t);
+      const t = document.createElement('div'); 
+      t.className = 'toast'; 
+      t.textContent = msg; 
+      document.body.appendChild(t);
       setTimeout(() => t.remove(), 3000);
     }
 
-    mainAuthBtn.onclick = () => authModal.style.display = 'block';
-    document.getElementById('close-auth').onclick = () => authModal.style.display = 'none';
-    document.getElementById('register').onclick = () => { const e = document.getElementById('email').value, p = document.getElementById('password').value; auth.createUserWithEmailAndPassword(e,p).catch(err=>alert(err.message)); };
-    document.getElementById('login').onclick = () => { const e = document.getElementById('email').value, p = document.getElementById('password').value; auth.signInWithEmailAndPassword(e,p).catch(err=>alert(err.message)); };
-    logoutBtn.onclick = () => auth.signOut();
+    function renderAll() { 
+      renderSchedule(); 
+      renderHomework(); 
+      renderNotes(); 
+      renderGrades(); 
+      updateSubjectAverages(); 
+      renderPlanner(); 
+      renderAchievements(); 
+      document.getElementById('user-points').textContent = points; 
+    }
 
-    auth.onAuthStateChanged(u => {
-      if (u) { mainAuthBtn.textContent = 'Выйти'; logoutBtn.style.display = 'block'; loadAll(u.uid); }
-      else { mainAuthBtn.textContent = 'Войти'; logoutBtn.style.display = 'none'; schedule = {}; homework = []; notes = []; grades = []; planner = []; points = 0; achievements = []; renderAll(); }
-    });
-
-    function loadAll(uid) {
-      db.collection('users').doc(uid).onSnapshot(d => { 
-        const data = d.data() || {}; 
-        schedule = data.schedule || {}; points = data.points || 0; achievements = data.achievements || [];
-        renderSchedule(); document.getElementById('user-points').textContent = points; renderAchievements();
-      });
-      ['homework','notes','grades','planner'].forEach(col => {
-        db.collection('users').doc(uid).collection(col).onSnapshot(s => { 
-          window[col] = s.docs.map(doc=>({id:doc.id,...doc.data()})); 
-          eval(`render${col.charAt(0).toUpperCase() + col.slice(1)}()`); 
-          if (col === 'grades') updateSubjectAverages();
-        });
+    function clearInputs(ids) { 
+      ids.forEach(id => {
+        const element = document.getElementById(id);
+        if (element) element.value = '';
       });
     }
 
-    function renderAll() { renderSchedule(); renderHomework(); renderNotes(); renderGrades(); updateSubjectAverages(); renderPlanner(); renderAchievements(); document.getElementById('user-points').textContent = points; }
-    function clearInputs(ids) { ids.forEach(id => document.getElementById(id).value = ''); }
+    function addPoints(p) { 
+      points += p; 
+      document.getElementById('user-points').textContent = points; 
+      if (auth.currentUser) {
+        db.collection('users').doc(auth.currentUser.uid).set({points}, {merge:true});
+      }
+    }
 
-    function addPoints(p) { points += p; document.getElementById('user-points').textContent = points; if (auth.currentUser) db.collection('users').doc(auth.currentUser.uid).set({points}, {merge:true}); }
-
-    renderSchedule(); renderAchievements();
+    // Инициализация при загрузке
+    document.addEventListener('DOMContentLoaded', () => {
+      initUI();
+      renderSchedule();
+      renderAchievements();
+    });
   </script>
 </body>
 </html>
