@@ -1,55 +1,26 @@
 {
   "name": "Neuron Study",
-  "short_name": "Neuron Study",
-  "description": "Умный помощник для учёбы с оффлайн-доступом и синхронизацией",
+  "short_name": "NeuronStudy",
+  "description": "Умный помощник для учёбы",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
   "background_color": "#0f0f2a",
   "theme_color": "#6366f1",
-  "orientation": "portrait-primary",
-  "id": "/",
+  "orientation": "any",
   "categories": ["education", "productivity"],
-  "lang": "ru",
   "icons": [
     {
-      "src": "/favicon-192x192.png",
+      "src": "/icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
-      "purpose": "maskable any"
+      "purpose": "any maskable"
     },
     {
-      "src": "/favicon-512x512.png",
+      "src": "/icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "maskable any"
-    },
-    {
-      "src": "/favicon-180x180.png",
-      "sizes": "180x180",
-      "type": "image/png",
-      "purpose": "any"
-    },
-    {
-      "src": "/favicon-32x32.png",
-      "sizes": "32x32",
-      "type": "image/png"
-    }
-  ],
-  "screenshots": [
-    {
-      "src": "/screenshots/desktop.png",
-      "sizes": "1280x720",
-      "type": "image/png",
-      "form_factor": "wide",
-      "label": "Главный экран Neuron Study"
-    },
-    {
-      "src": "/screenshots/mobile.png",
-      "sizes": "390x844",
-      "type": "image/png",
-      "form_factor": "narrow",
-      "label": "Мобильный вид приложения"
+      "purpose": "any maskable"
     }
   ]
 }
