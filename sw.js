@@ -1,4 +1,4 @@
-const CACHE_NAME = 'neuron-study-v3';
+const CACHE_NAME = 'neuron-study-v4';
 const CORE_ASSETS = [
   '/',
   '/index.html',
@@ -11,75 +11,74 @@ const CORE_ASSETS = [
 ];
 
 // Установка Service Worker
-self.addEventListener('install', event => {
-  console.log('Service Worker: Установка');
+self.addEventListener('install', (event) => {
+  console.log('🔄 Service Worker: Установка');
   self.skipWaiting();
   
   event.waitUntil(
     caches.open(CACHE_NAME)
-      .then(cache => {
-        console.log('Service Worker: Кэширование основных ресурсов');
+      .then((cache) => {
+        console.log('📦 Service Worker: Кэширование основных ресурсов');
         return cache.addAll(CORE_ASSETS);
       })
       .then(() => {
-        console.log('Service Worker: Все ресурсы закэшированы');
+        console.log('✅ Service Worker: Все ресурсы закэшированы');
       })
-      .catch(error => {
-        console.error('Service Worker: Ошибка кэширования', error);
+      .catch((error) => {
+        console.error('❌ Service Worker: Ошибка кэширования', error);
       })
   );
 });
 
 // Активация Service Worker
-self.addEventListener('activate', event => {
-  console.log('Service Worker: Активация');
+self.addEventListener('activate', (event) => {
+  console.log('🚀 Service Worker: Активация');
   
   event.waitUntil(
-    caches.keys().then(cacheNames => {
+    caches.keys().then((cacheNames) => {
       return Promise.all(
-        cacheNames.map(cacheName => {
+        cacheNames.map((cacheName) => {
           if (cacheName !== CACHE_NAME) {
-            console.log('Service Worker: Удаление старого кэша', cacheName);
+            console.log('🗑️ Service Worker: Удаление старого кэша', cacheName);
             return caches.delete(cacheName);
           }
         })
       );
     }).then(() => {
-      console.log('Service Worker: Активирован');
+      console.log('✅ Service Worker: Активирован и готов к работе');
       return self.clients.claim();
     })
   );
 });
 
 // Обработка запросов
-self.addEventListener('fetch', event => {
+self.addEventListener('fetch', (event) => {
   const { request } = event;
   
-  if (request.method !== 'GET') return;
-  
-  // Пропускаем запросы к Firebase
-  if (request.url.includes('firebase') || request.url.includes('googleapis')) {
+  // Пропускаем не-GET запросы и запросы к Firebase
+  if (request.method !== 'GET' || 
+      request.url.includes('firebase') || 
+      request.url.includes('googleapis')) {
     return;
   }
 
   event.respondWith(
     caches.match(request, { ignoreSearch: true })
-      .then(cachedResponse => {
-        // Возвращаем кэшированную версию, если есть
+      .then((cachedResponse) => {
+        // Возвращаем кэшированную версию если есть
         if (cachedResponse) {
           return cachedResponse;
         }
 
-        // Иначе загружаем из сети
+        // Загружаем из сети
         return fetch(request)
-          .then(networkResponse => {
+          .then((networkResponse) => {
             // Кэшируем только успешные ответы
             if (networkResponse && networkResponse.status === 200) {
               const responseToCache = networkResponse.clone();
               caches.open(CACHE_NAME)
-                .then(cache => {
-                  const cacheUrl = new URL(request.url);
-                  cache.put(cacheUrl.pathname, responseToCache);
+                .then((cache) => {
+                  cache.put(request, responseToCache);
                 });
             }
             return networkResponse;
@@ -87,7 +86,7 @@ self.addEventListener('fetch', event => {
           .catch(() => {
             // Fallback для страниц
             if (request.destination === 'document') {
-              return caches.match('/index.html', { ignoreSearch: true });
+              return caches.match('/index.html');
             }
             return new Response('Нет соединения', {
               status: 408,
@@ -96,44 +95,4 @@ self.addEventListener('fetch', event => {
           });
       })
   );
-});
-
-// Обработка push-уведомлений
-self.addEventListener('push', event => {
-  if (!event.data) return;
-  
-  const data = event.data.json();
-  const options = {
-    body: data.body || 'Новое уведомление от Neuron Study',
-    icon: '/favicon-192x192.png',
-    badge: '/favicon-32x32.png',
-    vibrate: [100, 50, 100],
-    data: {
-      url: data.url || '/'
-    },
-    actions: [
-      {
-        action: 'open',
-        title: 'Открыть'
-      },
-      {
-        action: 'close',
-        title: 'Закрыть'
-      }
-    ]
-  };
-
-  event.waitUntil(
-    self.registration.showNotification(data.title || 'Neuron Study', options)
-  );
-});
-
-self.addEventListener('notificationclick', event => {
-  event.notification.close();
-  
-  if (event.action === 'open') {
-    event.waitUntil(
-      clients.openWindow(event.notification.data.url)
-    );
-  }
 });
