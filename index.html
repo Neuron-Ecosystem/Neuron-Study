@@ -37,15 +37,15 @@
     .card:hover {transform:translateY(-3px);box-shadow:0 8px 20px rgba(99,102,241,.2);}
     .form-group {margin-bottom:16px;}
     .form-group label {display:block;margin-bottom:6px;color:var(--s);font-size:.95rem;font-weight:500;}
-    .form-group input, .form-group textarea {width:100%;padding:12px 14px;background:var(--card);border:1px solid var(--border);color:var(--t);border-radius:8px;font-size:1rem;transition:border .2s;}
-    .form-group input:focus, .form-group textarea:focus {border-color:var(--p);outline:none;box-shadow:0 0 0 2px rgba(99,102,241,.3);}
+    .form-group input, .form-group textarea, .form-group select {width:100%;padding:12px 14px;background:var(--card);border:1px solid var(--border);color:var(--t);border-radius:8px;font-size:1rem;transition:border .2s;}
+    .form-group input:focus, .form-group textarea:focus, .form-group select:focus {border-color:var(--p);outline:none;box-shadow:0 0 0 2px rgba(99,102,241,.3);}
     .btn {background:linear-gradient(45deg,var(--p),var(--pd));color:#fff;border:none;padding:10px 18px;border-radius:8px;cursor:pointer;font-weight:600;transition:all .25s;font-size:.95rem;}
     .btn:hover {background:linear-gradient(45deg,var(--pd),#3b3bc7);transform:translateY(-1px);box-shadow:0 4px 10px rgba(99,102,241,.4);}
     .delete-btn {background:#ff6b6b;color:#fff;}
     .delete-btn:hover {background:#ff4d4d;}
     .day-section {position:relative;overflow:hidden;}
     .day-title {font-size:1.6rem;color:var(--s);margin-bottom:12px;}
-    .edit-btn {position:absolute;top:16px;right:16px;background:var(--p);color:#fff;padding:6px 12px;font-size:.85rem;}
+    .edit-btn {position:absolute;top:16px;right:16px;background:var(--p);color:#fff;padding:6px 12px;font-size:.85rem;border-radius:6px;cursor:pointer;border:none;}
     .edit-btn:hover {background:var(--pd);}
     .empty-state {text-align:center;color:#777;padding:40px 0;}
     .empty-state i {font-size:3rem;color:#444;margin-bottom:16px;display:block;}
@@ -60,7 +60,7 @@
     .achievement-card.completed {opacity:0.7;border-color:#10b981;}
     .achievement-card.completed::after {content:"✓";position:absolute;top:8px;right:12px;font-size:1.5rem;color:#10b981;font-weight:bold;}
     #auth-container {position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:var(--card);padding:32px;border-radius:16px;z-index:2000;max-width:400px;width:90%;text-align:center;border:2px solid var(--p);box-shadow:0 0 30px rgba(99,102,241,.5);display:none;}
-    .close-btn {position:absolute;top:10px;right:12px;background:none;color:#fff;font-size:1.6rem;cursor:pointer;opacity:.7;}
+    .close-btn {position:absolute;top:10px;right:12px;background:none;color:#fff;font-size:1.6rem;cursor:pointer;opacity:.7;border:none;}
     .close-btn:hover {opacity:1;}
     .social-links {display:flex;gap:20px;justify-content:center;margin-top:20px;}
     .social-links a {font-size:2rem;color:var(--s);transition:.3s;text-decoration:none;}
@@ -506,6 +506,7 @@
       try {
         showToast('Загрузка данных...');
         
+        // Загрузка основных данных пользователя
         const userDoc = await db.collection('users').doc(uid).get();
         if (userDoc.exists) {
           const data = userDoc.data();
@@ -514,6 +515,7 @@
           achievements = data.achievements || [];
         }
 
+        // Загрузка коллекций
         const [hwSnapshot, notesSnapshot, gradesSnapshot, plannerSnapshot] = await Promise.all([
           db.collection('users').doc(uid).collection('homework').get(),
           db.collection('users').doc(uid).collection('notes').get(),
@@ -521,10 +523,10 @@
           db.collection('users').doc(uid).collection('planner').get()
         ]);
 
-        homework = hwSnapshot.docs.map(doc => ({ id: parseInt(doc.id), ...doc.data() }));
-        notes = notesSnapshot.docs.map(doc => ({ id: parseInt(doc.id), ...doc.data() }));
-        grades = gradesSnapshot.docs.map(doc => ({ id: parseInt(doc.id), ...doc.data() }));
-        planner = plannerSnapshot.docs.map(doc => ({ id: parseInt(doc.id), ...doc.data() }));
+        homework = hwSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        notes = notesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        grades = gradesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        planner = plannerSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
         renderAll();
         showToast('Данные загружены!');
@@ -577,7 +579,9 @@
       document.getElementById('schedule-editor').style.display = 'none';
       overlay.style.display = 'none';
       if (auth.currentUser) {
-        db.collection('users').doc(auth.currentUser.uid).set({schedule}, {merge:true});
+        db.collection('users').doc(auth.currentUser.uid).set({
+          schedule: schedule
+        }, {merge:true});
       }
     }
 
@@ -596,7 +600,14 @@
         return;
       }
       
-      const task = {id:Date.now(), subject:s, title:t, deadline:dl};
+      const task = {
+        id: Date.now().toString(),
+        subject: s, 
+        title: t, 
+        deadline: dl,
+        createdAt: new Date().toISOString()
+      };
+      
       homework.push(task); 
       renderHomework(); 
       addPoints(5); 
@@ -604,13 +615,19 @@
       clearInputs(['hw-subject','hw-title','hw-deadline']);
       
       if (auth.currentUser) {
-        db.collection('users').doc(auth.currentUser.uid).collection('homework').doc(task.id.toString()).set(task);
+        db.collection('users').doc(auth.currentUser.uid).collection('homework').doc(task.id).set(task);
       }
     }
 
     function renderHomework() {
       const l = document.getElementById('hw-list'); 
       l.innerHTML = '';
+      
+      if (homework.length === 0) {
+        l.innerHTML = '<div class="card"><div class="empty-state"><i class="fas fa-tasks"></i><br>Нет домашних заданий</div></div>';
+        return;
+      }
+      
       homework.sort((a,b) => a.deadline.localeCompare(b.deadline)).forEach(t => {
         const div = document.createElement('div'); 
         div.className = 'card';
@@ -620,18 +637,18 @@
               <div class="task-title">${t.title}</div>
               <div class="task-meta">${t.subject} • ${new Date(t.deadline).toLocaleDateString()}</div>
             </div>
-            <button class="delete-btn btn" onclick="deleteTask(${t.id})">×</button>
+            <button class="delete-btn btn" onclick="deleteTask('${t.id}')">×</button>
           </div>
         `;
         l.appendChild(div);
       });
     }
 
-    window.deleteTask = id => { 
+    window.deleteTask = async (id) => { 
       homework = homework.filter(t => t.id !== id); 
       renderHomework(); 
       if (auth.currentUser) {
-        db.collection('users').doc(auth.currentUser.uid).collection('homework').doc(id.toString()).delete();
+        await db.collection('users').doc(auth.currentUser.uid).collection('homework').doc(id).delete();
       }
     };
 
@@ -645,7 +662,14 @@
         return;
       }
       
-      const note = {id:Date.now(), subject:s, title:t, content:c, date:new Date().toISOString()};
+      const note = {
+        id: Date.now().toString(),
+        subject: s, 
+        title: t, 
+        content: c, 
+        date: new Date().toISOString()
+      };
+      
       notes.push(note); 
       renderNotes(); 
       addPoints(3); 
@@ -653,13 +677,19 @@
       clearInputs(['note-subject','note-title','note-content']);
       
       if (auth.currentUser) {
-        db.collection('users').doc(auth.currentUser.uid).collection('notes').doc(note.id.toString()).set(note);
+        db.collection('users').doc(auth.currentUser.uid).collection('notes').doc(note.id).set(note);
       }
     }
 
     function renderNotes() {
       const l = document.getElementById('notes-list'); 
       l.innerHTML = '';
+      
+      if (notes.length === 0) {
+        l.innerHTML = '<div class="card"><div class="empty-state"><i class="fas fa-sticky-note"></i><br>Нет заметок</div></div>';
+        return;
+      }
+      
       notes.sort((a,b) => b.date.localeCompare(a.date)).forEach(n => {
         const div = document.createElement('div'); 
         div.className = 'card';
@@ -669,18 +699,18 @@
               <div class="task-title">${n.title}</div>
               <div class="task-meta">${n.subject} • ${new Date(n.date).toLocaleDateString()}</div>
             </div>
-            <button class="delete-btn btn" onclick="deleteNote(${n.id})">×</button>
+            <button class="delete-btn btn" onclick="deleteNote('${n.id}')">×</button>
           </div>
         `;
         l.appendChild(div);
       });
     }
 
-    window.deleteNote = id => { 
+    window.deleteNote = async (id) => { 
       notes = notes.filter(n => n.id !== id); 
       renderNotes(); 
       if (auth.currentUser) {
-        db.collection('users').doc(auth.currentUser.uid).collection('notes').doc(id.toString()).delete();
+        await db.collection('users').doc(auth.currentUser.uid).collection('notes').doc(id).delete();
       }
     };
 
@@ -694,7 +724,14 @@
         return;
       }
       
-      const grade = {id:Date.now(), subject:s, value:v, date:d};
+      const grade = {
+        id: Date.now().toString(),
+        subject: s, 
+        value: v, 
+        date: d,
+        createdAt: new Date().toISOString()
+      };
+      
       grades.push(grade); 
       renderGrades(); 
       updateSubjectAverages(); 
@@ -703,13 +740,19 @@
       clearInputs(['grade-subject','grade-value','grade-date']);
       
       if (auth.currentUser) {
-        db.collection('users').doc(auth.currentUser.uid).collection('grades').doc(grade.id.toString()).set(grade);
+        db.collection('users').doc(auth.currentUser.uid).collection('grades').doc(grade.id).set(grade);
       }
     }
 
     function renderGrades() {
       const l = document.getElementById('grades-list'); 
       l.innerHTML = '';
+      
+      if (grades.length === 0) {
+        l.innerHTML = '<div class="card"><div class="empty-state"><i class="fas fa-chart-line"></i><br>Нет оценок</div></div>';
+        return;
+      }
+      
       grades.sort((a,b) => b.date.localeCompare(a.date)).forEach(g => {
         const div = document.createElement('div'); 
         div.className = 'card';
@@ -719,7 +762,7 @@
               <div class="task-title">${g.subject}</div>
               <div class="task-meta">Оценка: ${g.value} • ${new Date(g.date).toLocaleDateString()}</div>
             </div>
-            <button class="delete-btn btn" onclick="deleteGrade(${g.id})">×</button>
+            <button class="delete-btn btn" onclick="deleteGrade('${g.id}')">×</button>
           </div>
         `;
         l.appendChild(div);
@@ -752,14 +795,24 @@
 
     function updateChart() {
       const ctx = document.getElementById('grades-chart').getContext('2d');
+      
+      if (grades.length === 0) {
+        if (gradesChart) gradesChart.destroy();
+        return;
+      }
+      
       const subjects = [...new Set(grades.map(g => g.subject))];
       const datasets = subjects.map(sub => {
-        const data = grades.filter(g => g.subject === sub).map(g => g.value);
+        const subjectGrades = grades.filter(g => g.subject === sub)
+          .sort((a, b) => new Date(a.date) - new Date(b.date));
+        
         return {
           label: sub, 
-          data, 
+          data: subjectGrades.map(g => g.value), 
           borderColor: `hsl(${Math.random()*360}, 70%, 50%)`, 
-          tension: 0.3
+          backgroundColor: `hsla(${Math.random()*360}, 70%, 50%, 0.1)`,
+          tension: 0.3,
+          fill: false
         };
       });
       
@@ -776,19 +829,22 @@
           scales: {
             y: {
               min: 1,
-              max: 5
+              max: 5,
+              ticks: {
+                stepSize: 1
+              }
             }
           }
         }
       });
     }
 
-    window.deleteGrade = id => { 
+    window.deleteGrade = async (id) => { 
       grades = grades.filter(g => g.id !== id); 
       renderGrades(); 
       updateSubjectAverages(); 
       if (auth.currentUser) {
-        db.collection('users').doc(auth.currentUser.uid).collection('grades').doc(id.toString()).delete();
+        await db.collection('users').doc(auth.currentUser.uid).collection('grades').doc(id).delete();
       }
     };
 
@@ -802,7 +858,15 @@
         return;
       }
       
-      const item = {id:Date.now(), goal:g, deadline:dl, reminder:r, progress:0};
+      const item = {
+        id: Date.now().toString(),
+        goal: g, 
+        deadline: dl, 
+        reminder: r, 
+        progress: 0,
+        createdAt: new Date().toISOString()
+      };
+      
       planner.push(item); 
       renderPlanner(); 
       addPoints(4); 
@@ -810,35 +874,43 @@
       clearInputs(['planner-goal','planner-deadline']);
       
       if (auth.currentUser) {
-        db.collection('users').doc(auth.currentUser.uid).collection('planner').doc(item.id.toString()).set(item);
+        db.collection('users').doc(auth.currentUser.uid).collection('planner').doc(item.id).set(item);
       }
     }
 
     function renderPlanner() {
       const l = document.getElementById('planner-list'); 
       l.innerHTML = '';
+      
+      if (planner.length === 0) {
+        l.innerHTML = '<div class="card"><div class="empty-state"><i class="fas fa-clipboard-check"></i><br>Нет целей</div></div>';
+        return;
+      }
+      
       planner.forEach(p => {
         const div = document.createElement('div'); 
         div.className = 'card';
         div.innerHTML = `
-          <div>
-            <div class="task-title">${p.goal}</div>
-            <div class="task-meta">Дедлайн: ${new Date(p.deadline).toLocaleDateString()}</div>
-            <div class="progress-bar">
-              <div class="progress-fill" style="width:${p.progress}%"></div>
+          <div class="planner-item">
+            <div style="flex:1">
+              <div class="task-title">${p.goal}</div>
+              <div class="task-meta">Дедлайн: ${new Date(p.deadline).toLocaleDateString()}</div>
+              <div class="progress-bar">
+                <div class="progress-fill" style="width:${p.progress}%"></div>
+              </div>
             </div>
+            <button class="delete-btn btn" onclick="deletePlanner('${p.id}')">×</button>
           </div>
-          <button class="delete-btn btn" onclick="deletePlanner(${p.id})">×</button>
         `;
         l.appendChild(div);
       });
     }
 
-    window.deletePlanner = id => { 
+    window.deletePlanner = async (id) => { 
       planner = planner.filter(p => p.id !== id); 
       renderPlanner(); 
       if (auth.currentUser) {
-        db.collection('users').doc(auth.currentUser.uid).collection('planner').doc(id.toString()).delete();
+        await db.collection('users').doc(auth.currentUser.uid).collection('planner').doc(id).delete();
       }
     };
 
@@ -860,11 +932,17 @@
     function renderAchievements() {
       const l = document.getElementById('achievements-list'); 
       l.innerHTML = '';
+      
       ACHIEVEMENTS.forEach(a => {
         const completed = achievements.includes(a.id) || a.check();
         if (completed && !achievements.includes(a.id)) { 
           achievements.push(a.id); 
           showToast(`Достижение: ${a.title}!`); 
+          if (auth.currentUser) {
+            db.collection('users').doc(auth.currentUser.uid).set({
+              achievements: achievements
+            }, {merge:true});
+          }
         }
         const div = document.createElement('div'); 
         div.className = `achievement-card ${completed ? 'completed' : ''}`;
@@ -875,9 +953,6 @@
 
     function checkAchievements() { 
       renderAchievements(); 
-      if (auth.currentUser) {
-        db.collection('users').doc(auth.currentUser.uid).set({achievements}, {merge:true});
-      }
     }
 
     function showToast(msg) {
@@ -910,7 +985,9 @@
       points += p; 
       document.getElementById('user-points').textContent = points; 
       if (auth.currentUser) {
-        db.collection('users').doc(auth.currentUser.uid).set({points}, {merge:true});
+        db.collection('users').doc(auth.currentUser.uid).set({
+          points: points
+        }, {merge:true});
       }
     }
 
