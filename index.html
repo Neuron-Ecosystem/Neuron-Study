@@ -254,7 +254,7 @@
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
 
-  <script>
+<script>
     // ==================== FIREBASE CONFIGURATION ====================
     const firebaseConfig = { 
       apiKey: "AIzaSyDOaDVzzPjyYm4HWMND2XYWjLy_h4wty5s", 
@@ -265,81 +265,56 @@
       appId: "1:589834476565:web:c9c878a905ecece4dd421c" 
     };
     
-    // Инициализация Firebase
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
     const db = firebase.firestore();
-    
-    // Настройка провайдера Google
     const googleProvider = new firebase.auth.GoogleAuthProvider();
-    googleProvider.addScope('email');
-    googleProvider.addScope('profile');
 
     // ==================== PWA INSTALL MANAGER ====================
     let deferredPrompt;
     const installButton = document.getElementById('pwa-install-button');
 
-    // Событие beforeinstallprompt
     window.addEventListener('beforeinstallprompt', (e) => {
-      console.log('🎯 PWA: beforeinstallprompt event caught');
       e.preventDefault();
       deferredPrompt = e;
       showInstallButton();
     });
 
-    // Показать кнопку установки
     function showInstallButton() {
       if (isAppInstalled()) return;
       installButton.style.display = 'block';
-      setTimeout(() => {
-        installButton.style.display = 'none';
-      }, 15000);
+      setTimeout(() => installButton.style.display = 'none', 15000);
     }
 
-    // Установка PWA
     installButton.addEventListener('click', async () => {
-      if (!deferredPrompt) {
-        showToast('❌ Установка недоступна');
-        return;
-      }
-      
+      if (!deferredPrompt) return;
       deferredPrompt.prompt();
       const { outcome } = await deferredPrompt.userChoice;
-      
-      if (outcome === 'accepted') {
-        showToast('📥 Приложение устанавливается...');
-      } else {
-        showToast('❌ Установка отменена');
-      }
-      
+      if (outcome === 'accepted') showToast('📥 Установка...');
       deferredPrompt = null;
       installButton.style.display = 'none';
     });
 
-    // Проверка установлено ли приложение
     function isAppInstalled() {
       return window.matchMedia('(display-mode: standalone)').matches;
     }
 
-    // Событие appinstalled
-    window.addEventListener('appinstalled', () => {
-      console.log('🎉 PWA: App installed');
-      installButton.style.display = 'none';
-      deferredPrompt = null;
-    });
-
-    // ==================== SERVICE WORKER REGISTRATION ====================
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/sw.js')
-          .then(registration => {
-            console.log('✅ Service Worker зарегистрирован');
-          })
-          .catch(error => {
-            console.error('❌ Service Worker ошибка:', error);
-          });
+        navigator.serviceWorker.register('/sw.js').catch(console.error);
       });
     }
+
+    // ==================== DATA KEYS FOR LOCAL STORAGE ====================
+    const LS_KEYS = {
+      SCHEDULE: 'ns_schedule',
+      HOMEWORK: 'ns_homework',
+      NOTES: 'ns_notes',
+      GRADES: 'ns_grades',
+      PLANNER: 'ns_planner',
+      POINTS: 'ns_points',
+      ACHIEVEMENTS: 'ns_achievements'
+    };
 
     // ==================== APPLICATION CODE ====================
     const menuIcon = document.getElementById('menuIcon');
@@ -350,6 +325,8 @@
     const logoutBtn = document.getElementById('menu-logout');
 
     const DAYS = ["Понедельник","Вторник","Среда","Четверг","Пятница","Суббота","Воскресенье"];
+    
+    // Глобальные переменные данных
     let schedule = {};
     let homework = [];
     let notes = [];
@@ -359,9 +336,7 @@
     let achievements = [];
     let gradesChart = null;
 
-    // Инициализация интерфейса
     function initUI() {
-      // Навигация
       menuIcon.onclick = () => {
         sidebar.classList.toggle('open');
         overlay.style.display = sidebar.classList.contains('open') ? 'block' : 'none';
@@ -374,7 +349,6 @@
         document.getElementById('schedule-editor').style.display = 'none';
       };
 
-      // Переключение вкладок
       document.querySelectorAll('.sidebar-item[data-view]').forEach(item => {
         item.onclick = () => {
           document.querySelectorAll('.content-view').forEach(v => v.classList.remove('active'));
@@ -386,7 +360,6 @@
         };
       });
 
-      // Аутентификация
       mainAuthBtn.onclick = () => {
         if (auth.currentUser) {
           auth.signOut();
@@ -406,7 +379,6 @@
       document.getElementById('google').onclick = handleGoogleAuth;
       logoutBtn.onclick = () => auth.signOut();
 
-      // Обработчики форм
       document.getElementById('add-hw').onclick = addHomework;
       document.getElementById('save-note').onclick = addNote;
       document.getElementById('add-grade').onclick = addGrade;
@@ -415,98 +387,72 @@
       document.getElementById('cancel-schedule').onclick = cancelSchedule;
     }
 
-    // Обработчики аутентификации
+    // --- AUTH HANDLERS ---
     async function handleEmailRegister() {
       const email = document.getElementById('email').value;
       const password = document.getElementById('password').value;
-      
-      if (!email || !password) {
-        showToast('Введите email и пароль');
-        return;
-      }
-
+      if (!email || !password) return showToast('Заполните поля');
       try {
-        showToast('Регистрация...');
         await auth.createUserWithEmailAndPassword(email, password);
-        showToast('Регистрация успешна!');
         authModal.style.display = 'none';
         overlay.style.display = 'none';
-      } catch (error) {
-        console.error('Ошибка регистрации:', error);
-        showToast(getAuthErrorMessage(error));
-      }
+      } catch (e) { showToast(getAuthErrorMessage(e)); }
     }
 
     async function handleEmailLogin() {
       const email = document.getElementById('email').value;
       const password = document.getElementById('password').value;
-      
-      if (!email || !password) {
-        showToast('Введите email и пароль');
-        return;
-      }
-
       try {
-        showToast('Вход...');
         await auth.signInWithEmailAndPassword(email, password);
-        showToast('Вход выполнен!');
         authModal.style.display = 'none';
         overlay.style.display = 'none';
-      } catch (error) {
-        console.error('Ошибка входа:', error);
-        showToast(getAuthErrorMessage(error));
-      }
+      } catch (e) { showToast(getAuthErrorMessage(e)); }
     }
 
     async function handleGoogleAuth() {
       try {
-        showToast('Вход через Google...');
         await auth.signInWithPopup(googleProvider);
-        showToast('Вход выполнен!');
         authModal.style.display = 'none';
         overlay.style.display = 'none';
-      } catch (error) {
-        console.error('Ошибка Google аутентификации:', error);
-        showToast(getAuthErrorMessage(error));
-      }
+      } catch (e) { showToast(getAuthErrorMessage(e)); }
     }
 
     function getAuthErrorMessage(error) {
-      const messages = {
-        'auth/email-already-in-use': 'Email уже используется',
-        'auth/invalid-email': 'Неверный формат email',
-        'auth/operation-not-allowed': 'Опция регистрации отключена',
-        'auth/weak-password': 'Пароль слишком слабый',
-        'auth/user-disabled': 'Аккаунт отключен',
-        'auth/user-not-found': 'Пользователь не найден',
-        'auth/wrong-password': 'Неверный пароль',
-        'auth/popup-closed-by-user': 'Окно аутентификации закрыто'
-      };
-      
-      return messages[error.code] || `Ошибка: ${error.message}`;
+      return `Ошибка: ${error.message}`;
     }
 
-    // Мониторинг состояния аутентификации
+    // --- LOGIC: AUTH STATE & DATA LOADING ---
     auth.onAuthStateChanged(async (user) => {
       if (user) {
+        // Пользователь вошел -> Грузим из Firebase
         mainAuthBtn.textContent = 'Выйти';
         logoutBtn.style.display = 'block';
-        showToast(`Добро пожаловать, ${user.displayName || user.email}!`);
-        await loadUserData(user.uid);
+        showToast(`Привет, ${user.displayName || 'Студент'}!`);
+        await loadFirebaseData(user.uid);
       } else {
+        // Пользователь вышел -> Грузим из LocalStorage
         mainAuthBtn.textContent = 'Войти';
         logoutBtn.style.display = 'none';
-        resetLocalData();
+        loadLocalData();
         renderAll();
       }
     });
 
-    // Загрузка данных пользователя
-    async function loadUserData(uid) {
+    // Загрузка локальных данных
+    function loadLocalData() {
+      schedule = JSON.parse(localStorage.getItem(LS_KEYS.SCHEDULE)) || {};
+      homework = JSON.parse(localStorage.getItem(LS_KEYS.HOMEWORK)) || [];
+      notes = JSON.parse(localStorage.getItem(LS_KEYS.NOTES)) || [];
+      grades = JSON.parse(localStorage.getItem(LS_KEYS.GRADES)) || [];
+      planner = JSON.parse(localStorage.getItem(LS_KEYS.PLANNER)) || [];
+      points = parseInt(localStorage.getItem(LS_KEYS.POINTS)) || 0;
+      achievements = JSON.parse(localStorage.getItem(LS_KEYS.ACHIEVEMENTS)) || [];
+    }
+
+    // Загрузка данных из Firebase
+    async function loadFirebaseData(uid) {
       try {
-        showToast('Загрузка данных...');
-        
-        // Загрузка основных данных пользователя
+        showToast('Синхронизация...');
         const userDoc = await db.collection('users').doc(uid).get();
         if (userDoc.exists) {
           const data = userDoc.data();
@@ -515,39 +461,28 @@
           achievements = data.achievements || [];
         }
 
-        // Загрузка коллекций
-        const [hwSnapshot, notesSnapshot, gradesSnapshot, plannerSnapshot] = await Promise.all([
+        const [hwSnap, notesSnap, gradesSnap, planSnap] = await Promise.all([
           db.collection('users').doc(uid).collection('homework').get(),
           db.collection('users').doc(uid).collection('notes').get(),
           db.collection('users').doc(uid).collection('grades').get(),
           db.collection('users').doc(uid).collection('planner').get()
         ]);
 
-        homework = hwSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        notes = notesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        grades = gradesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        planner = plannerSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        homework = hwSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        notes = notesSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        grades = gradesSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        planner = planSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
         renderAll();
-        showToast('Данные загружены!');
-        
+        showToast('Данные загружены');
       } catch (error) {
-        console.error('Ошибка загрузки данных:', error);
-        showToast('Ошибка загрузки данных');
+        console.error(error);
+        showToast('Ошибка загрузки');
       }
     }
 
-    function resetLocalData() {
-      schedule = {};
-      homework = [];
-      notes = [];
-      grades = [];
-      planner = [];
-      points = 0;
-      achievements = [];
-    }
+    // --- LOGIC: RENDERING & SAVING ---
 
-    // Функции рендеринга
     function renderSchedule() {
       const c = document.getElementById('schedule-content'); 
       c.innerHTML = '';
@@ -578,10 +513,12 @@
       renderSchedule();
       document.getElementById('schedule-editor').style.display = 'none';
       overlay.style.display = 'none';
+
+      // SAVE LOGIC
       if (auth.currentUser) {
-        db.collection('users').doc(auth.currentUser.uid).set({
-          schedule: schedule
-        }, {merge:true});
+        db.collection('users').doc(auth.currentUser.uid).set({ schedule }, { merge: true });
+      } else {
+        localStorage.setItem(LS_KEYS.SCHEDULE, JSON.stringify(schedule));
       }
     }
 
@@ -594,39 +531,28 @@
       const s = document.getElementById('hw-subject').value.trim();
       const t = document.getElementById('hw-title').value.trim();
       const dl = document.getElementById('hw-deadline').value;
+      if (!s || !t || !dl) return showToast('Заполните все поля');
       
-      if (!s || !t || !dl) {
-        showToast('Заполните все поля');
-        return;
-      }
-      
-      const task = {
-        id: Date.now().toString(),
-        subject: s, 
-        title: t, 
-        deadline: dl,
-        createdAt: new Date().toISOString()
-      };
+      const task = { id: Date.now().toString(), subject: s, title: t, deadline: dl, createdAt: new Date().toISOString() };
       
       homework.push(task); 
       renderHomework(); 
       addPoints(5); 
       checkAchievements();
       clearInputs(['hw-subject','hw-title','hw-deadline']);
-      
+
+      // SAVE LOGIC
       if (auth.currentUser) {
         db.collection('users').doc(auth.currentUser.uid).collection('homework').doc(task.id).set(task);
+      } else {
+        localStorage.setItem(LS_KEYS.HOMEWORK, JSON.stringify(homework));
       }
     }
 
     function renderHomework() {
       const l = document.getElementById('hw-list'); 
       l.innerHTML = '';
-      
-      if (homework.length === 0) {
-        l.innerHTML = '<div class="card"><div class="empty-state"><i class="fas fa-tasks"></i><br>Нет домашних заданий</div></div>';
-        return;
-      }
+      if (homework.length === 0) return l.innerHTML = '<div class="card"><div class="empty-state"><i class="fas fa-tasks"></i><br>Нет заданий</div></div>';
       
       homework.sort((a,b) => a.deadline.localeCompare(b.deadline)).forEach(t => {
         const div = document.createElement('div'); 
@@ -649,6 +575,8 @@
       renderHomework(); 
       if (auth.currentUser) {
         await db.collection('users').doc(auth.currentUser.uid).collection('homework').doc(id).delete();
+      } else {
+        localStorage.setItem(LS_KEYS.HOMEWORK, JSON.stringify(homework));
       }
     };
 
@@ -656,39 +584,28 @@
       const s = document.getElementById('note-subject').value.trim();
       const t = document.getElementById('note-title').value.trim();
       const c = document.getElementById('note-content').value.trim();
+      if (!s || !t || !c) return showToast('Заполните все поля');
       
-      if (!s || !t || !c) {
-        showToast('Заполните все поля');
-        return;
-      }
-      
-      const note = {
-        id: Date.now().toString(),
-        subject: s, 
-        title: t, 
-        content: c, 
-        date: new Date().toISOString()
-      };
+      const note = { id: Date.now().toString(), subject: s, title: t, content: c, date: new Date().toISOString() };
       
       notes.push(note); 
       renderNotes(); 
       addPoints(3); 
       checkAchievements();
       clearInputs(['note-subject','note-title','note-content']);
-      
+
+      // SAVE LOGIC
       if (auth.currentUser) {
         db.collection('users').doc(auth.currentUser.uid).collection('notes').doc(note.id).set(note);
+      } else {
+        localStorage.setItem(LS_KEYS.NOTES, JSON.stringify(notes));
       }
     }
 
     function renderNotes() {
       const l = document.getElementById('notes-list'); 
       l.innerHTML = '';
-      
-      if (notes.length === 0) {
-        l.innerHTML = '<div class="card"><div class="empty-state"><i class="fas fa-sticky-note"></i><br>Нет заметок</div></div>';
-        return;
-      }
+      if (notes.length === 0) return l.innerHTML = '<div class="card"><div class="empty-state"><i class="fas fa-sticky-note"></i><br>Нет заметок</div></div>';
       
       notes.sort((a,b) => b.date.localeCompare(a.date)).forEach(n => {
         const div = document.createElement('div'); 
@@ -711,6 +628,8 @@
       renderNotes(); 
       if (auth.currentUser) {
         await db.collection('users').doc(auth.currentUser.uid).collection('notes').doc(id).delete();
+      } else {
+        localStorage.setItem(LS_KEYS.NOTES, JSON.stringify(notes));
       }
     };
 
@@ -718,19 +637,9 @@
       const s = document.getElementById('grade-subject').value.trim();
       const v = parseInt(document.getElementById('grade-value').value);
       const d = document.getElementById('grade-date').value;
+      if (!s || isNaN(v) || v<1 || v>5 || !d) return showToast('Проверьте данные');
       
-      if (!s || isNaN(v) || v<1 || v>5 || !d) {
-        showToast('Проверьте данные');
-        return;
-      }
-      
-      const grade = {
-        id: Date.now().toString(),
-        subject: s, 
-        value: v, 
-        date: d,
-        createdAt: new Date().toISOString()
-      };
+      const grade = { id: Date.now().toString(), subject: s, value: v, date: d, createdAt: new Date().toISOString() };
       
       grades.push(grade); 
       renderGrades(); 
@@ -738,19 +647,21 @@
       addPoints(v); 
       checkAchievements();
       clearInputs(['grade-subject','grade-value','grade-date']);
-      
+
+      // SAVE LOGIC
       if (auth.currentUser) {
         db.collection('users').doc(auth.currentUser.uid).collection('grades').doc(grade.id).set(grade);
+      } else {
+        localStorage.setItem(LS_KEYS.GRADES, JSON.stringify(grades));
       }
     }
 
     function renderGrades() {
       const l = document.getElementById('grades-list'); 
       l.innerHTML = '';
-      
       if (grades.length === 0) {
-        l.innerHTML = '<div class="card"><div class="empty-state"><i class="fas fa-chart-line"></i><br>Нет оценок</div></div>';
-        return;
+        if(gradesChart) gradesChart.destroy();
+        return l.innerHTML = '<div class="card"><div class="empty-state"><i class="fas fa-chart-line"></i><br>Нет оценок</div></div>';
       }
       
       grades.sort((a,b) => b.date.localeCompare(a.date)).forEach(g => {
@@ -774,7 +685,6 @@
       const container = document.getElementById('subject-averages'); 
       container.innerHTML = '';
       const subjects = {};
-      
       grades.forEach(g => { 
         if (!subjects[g.subject]) subjects[g.subject] = []; 
         subjects[g.subject].push(g.value); 
@@ -787,20 +697,10 @@
         span.textContent = `${sub}: ${avg}`;
         container.appendChild(span);
       });
-      
-      if (Object.keys(subjects).length === 0) {
-        container.innerHTML = '<p style="text-align:center;color:#777">Оценок нет</p>';
-      }
     }
 
     function updateChart() {
       const ctx = document.getElementById('grades-chart').getContext('2d');
-      
-      if (grades.length === 0) {
-        if (gradesChart) gradesChart.destroy();
-        return;
-      }
-      
       const subjects = [...new Set(grades.map(g => g.subject))];
       const datasets = subjects.map(sub => {
         const subjectGrades = grades.filter(g => g.subject === sub)
@@ -817,25 +717,13 @@
       });
       
       if (gradesChart) gradesChart.destroy();
-      
       gradesChart = new Chart(ctx, {
         type: 'line',
         data: {
           labels: [...new Set(grades.map(g => new Date(g.date).toLocaleDateString('ru')))], 
           datasets
         },
-        options: {
-          responsive: true,
-          scales: {
-            y: {
-              min: 1,
-              max: 5,
-              ticks: {
-                stepSize: 1
-              }
-            }
-          }
-        }
+        options: { responsive: true, scales: { y: { min: 1, max: 5, ticks: { stepSize: 1 } } } }
       });
     }
 
@@ -845,6 +733,8 @@
       updateSubjectAverages(); 
       if (auth.currentUser) {
         await db.collection('users').doc(auth.currentUser.uid).collection('grades').doc(id).delete();
+      } else {
+        localStorage.setItem(LS_KEYS.GRADES, JSON.stringify(grades));
       }
     };
 
@@ -852,40 +742,28 @@
       const g = document.getElementById('planner-goal').value.trim();
       const dl = document.getElementById('planner-deadline').value;
       const r = parseInt(document.getElementById('planner-reminder').value);
+      if (!g || !dl) return showToast('Укажите цель и дедлайн');
       
-      if (!g || !dl) {
-        showToast('Укажите цель и дедлайн');
-        return;
-      }
-      
-      const item = {
-        id: Date.now().toString(),
-        goal: g, 
-        deadline: dl, 
-        reminder: r, 
-        progress: 0,
-        createdAt: new Date().toISOString()
-      };
+      const item = { id: Date.now().toString(), goal: g, deadline: dl, reminder: r, progress: 0, createdAt: new Date().toISOString() };
       
       planner.push(item); 
       renderPlanner(); 
       addPoints(4); 
       checkAchievements();
       clearInputs(['planner-goal','planner-deadline']);
-      
+
+      // SAVE LOGIC
       if (auth.currentUser) {
         db.collection('users').doc(auth.currentUser.uid).collection('planner').doc(item.id).set(item);
+      } else {
+        localStorage.setItem(LS_KEYS.PLANNER, JSON.stringify(planner));
       }
     }
 
     function renderPlanner() {
       const l = document.getElementById('planner-list'); 
       l.innerHTML = '';
-      
-      if (planner.length === 0) {
-        l.innerHTML = '<div class="card"><div class="empty-state"><i class="fas fa-clipboard-check"></i><br>Нет целей</div></div>';
-        return;
-      }
+      if (planner.length === 0) return l.innerHTML = '<div class="card"><div class="empty-state"><i class="fas fa-clipboard-check"></i><br>Нет целей</div></div>';
       
       planner.forEach(p => {
         const div = document.createElement('div'); 
@@ -895,9 +773,7 @@
             <div style="flex:1">
               <div class="task-title">${p.goal}</div>
               <div class="task-meta">Дедлайн: ${new Date(p.deadline).toLocaleDateString()}</div>
-              <div class="progress-bar">
-                <div class="progress-fill" style="width:${p.progress}%"></div>
-              </div>
+              <div class="progress-bar"><div class="progress-fill" style="width:${p.progress}%"></div></div>
             </div>
             <button class="delete-btn btn" onclick="deletePlanner('${p.id}')">×</button>
           </div>
@@ -911,18 +787,17 @@
       renderPlanner(); 
       if (auth.currentUser) {
         await db.collection('users').doc(auth.currentUser.uid).collection('planner').doc(id).delete();
+      } else {
+        localStorage.setItem(LS_KEYS.PLANNER, JSON.stringify(planner));
       }
     };
 
     const ACHIEVEMENTS = [
       {id:1, title:"Первая заметка", desc:"Создайте свою первую заметку", check:() => notes.length >= 1},
       {id:2, title:"5 ДЗ подряд", desc:"Добавьте 5 домашних заданий", check:() => homework.length >= 5},
-      {id:4, title:"Средний балл 5.0", desc:"Достигните среднего балла 5.0 по любому предмету", check:() => {
+      {id:4, title:"Средний балл 5.0", desc:"Средний балл 5.0 по предмету", check:() => {
         const subs = {}; 
-        grades.forEach(g => { 
-          if (!subs[g.subject]) subs[g.subject] = []; 
-          subs[g.subject].push(g.value); 
-        });
+        grades.forEach(g => { if (!subs[g.subject]) subs[g.subject] = []; subs[g.subject].push(g.value); });
         return Object.values(subs).some(arr => arr.reduce((a,b)=>a+b,0)/arr.length >= 5);
       }},
       {id:6, title:"Планировщик", desc:"Создайте 3 цели", check:() => planner.length >= 3},
@@ -932,52 +807,49 @@
     function renderAchievements() {
       const l = document.getElementById('achievements-list'); 
       l.innerHTML = '';
-      
+      let newUnlock = false;
+
       ACHIEVEMENTS.forEach(a => {
         const completed = achievements.includes(a.id) || a.check();
         if (completed && !achievements.includes(a.id)) { 
           achievements.push(a.id); 
-          showToast(`Достижение: ${a.title}!`); 
-          if (auth.currentUser) {
-            db.collection('users').doc(auth.currentUser.uid).set({
-              achievements: achievements
-            }, {merge:true});
-          }
+          showToast(`🏆 Достижение: ${a.title}!`); 
+          newUnlock = true;
         }
         const div = document.createElement('div'); 
         div.className = `achievement-card ${completed ? 'completed' : ''}`;
         div.innerHTML = `<h4>${a.title}</h4><p>${a.desc}</p>`;
         l.appendChild(div);
       });
+
+      if (newUnlock) {
+        if (auth.currentUser) {
+          db.collection('users').doc(auth.currentUser.uid).set({ achievements }, {merge:true});
+        } else {
+          localStorage.setItem(LS_KEYS.ACHIEVEMENTS, JSON.stringify(achievements));
+        }
+      }
     }
 
-    function checkAchievements() { 
-      renderAchievements(); 
-    }
+    function checkAchievements() { renderAchievements(); }
 
     function showToast(msg) {
       const t = document.createElement('div'); 
-      t.className = 'toast'; 
-      t.textContent = msg; 
+      t.className = 'toast'; t.textContent = msg; 
       document.body.appendChild(t);
       setTimeout(() => t.remove(), 3000);
     }
 
     function renderAll() { 
-      renderSchedule(); 
-      renderHomework(); 
-      renderNotes(); 
-      renderGrades(); 
-      updateSubjectAverages(); 
-      renderPlanner(); 
-      renderAchievements(); 
+      renderSchedule(); renderHomework(); renderNotes(); renderGrades(); 
+      updateSubjectAverages(); renderPlanner(); renderAchievements(); 
       document.getElementById('user-points').textContent = points; 
     }
 
     function clearInputs(ids) { 
       ids.forEach(id => {
-        const element = document.getElementById(id);
-        if (element) element.value = '';
+        const el = document.getElementById(id);
+        if (el) el.value = '';
       });
     }
 
@@ -985,18 +857,17 @@
       points += p; 
       document.getElementById('user-points').textContent = points; 
       if (auth.currentUser) {
-        db.collection('users').doc(auth.currentUser.uid).set({
-          points: points
-        }, {merge:true});
+        db.collection('users').doc(auth.currentUser.uid).set({ points }, {merge:true});
+      } else {
+        localStorage.setItem(LS_KEYS.POINTS, points);
       }
     }
 
-    // ==================== INITIALIZATION ====================
     document.addEventListener('DOMContentLoaded', () => {
       initUI();
-      renderSchedule();
-      renderAchievements();
-      console.log('🚀 Neuron Study запущен!');
+      // Начальная загрузка: если нет пользователя в кеше Firebase,
+      // onAuthStateChanged сработает с null и загрузит LocalStorage.
+      console.log('🚀 Neuron Study (Offline Ready) запущен!');
     });
   </script>
 </body>
