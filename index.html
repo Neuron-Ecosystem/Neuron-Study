@@ -99,9 +99,10 @@
       if (user) {
         document.getElementById('user-info').textContent = user.displayName || "Студент";
         loadData();
-      } else {
-        location.href = "login.html"; // Или вызов входа
-      }
+ } else {
+    // Вместо редиректа запускаем вход через Google прямо здесь
+    auth.signInWithPopup(new firebase.auth.GoogleAuthProvider());
+}
     });
 
     async function loadData() {
