@@ -16,46 +16,40 @@
     .header {background:var(--sb);height:60px;display:flex;align-items:center;position:fixed;top:0;width:100%;z-index:100;padding:0 20px;justify-content:space-between;border-bottom:1px solid var(--border);}
     .container {max-width:800px;margin:0 auto;padding:20px;}
     
-    .card {background:var(--card);border-radius:15px;padding:20px;margin-bottom:20px;border:1px solid var(--border);box-shadow:0 4px 15px rgba(0,0,0,0.3);}
     .section-title {color:var(--p);margin-bottom:15px;display:flex;align-items:center;gap:10px;font-size: 1.4rem;}
-    
-    .input-field {width:100%;padding:12px;margin-bottom:10px;background:var(--sb);border:1px solid var(--border);color:#fff;border-radius:8px;outline:none;font-size: 16px;}
+    .input-field {width:100%;padding:12px;margin-bottom:10px;background:var(--sb);border:1px solid var(--border);color:#fff;border-radius:8px;outline:none;}
     .btn {background:var(--p);color:#fff;border:none;padding:12px 20px;border-radius:8px;cursor:pointer;width:100%;font-weight:bold;transition:0.3s;}
     .btn:hover {background:var(--pd);}
 
-    .schedule-day-group {margin-bottom:20px; background: rgba(255,255,255,0.02); padding: 15px; border-radius: 12px; border: 1px solid rgba(143,148,251,0.1);}
-    .day-title {color:var(--s); border-bottom:1px solid var(--border); padding-bottom:8px; margin-bottom:12px; font-size:1.2rem; font-weight: bold;}
-    .schedule-item {display:flex; justify-content:space-between; align-items:center; background:var(--sb); padding:12px; border-radius:8px; margin-bottom:8px; border: 1px solid var(--border);}
+    .schedule-day-group {margin-bottom:20px; background: rgba(255,255,255,0.02); padding: 15px; border-radius: 12px; border: 1px solid var(--border);}
+    .day-title {color:var(--s); border-bottom:1px solid var(--border); padding-bottom:8px; margin-bottom:12px; font-size:1.1rem; font-weight: bold;}
+    .schedule-item {display:flex; justify-content:space-between; align-items:center; background:var(--sb); padding:10px; border-radius:8px; margin-bottom:8px;}
     
-    .modal {display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.85);z-index:1000;align-items:center;justify-content:center;backdrop-filter: blur(5px);}
+    .modal {display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.85);z-index:1000;align-items:center;justify-content:center;}
     .modal.active {display:flex;}
-    .modal-content {background:var(--card);width:90%;max-width:400px;padding:25px;border-radius:20px;position:relative;border: 1px solid var(--p);}
-
-    .toast {position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--p);padding:12px 25px;border-radius:30px;z-index:2000;box-shadow: 0 5px 15px rgba(0,0,0,0.5); font-weight: bold;}
+    .modal-content {background:var(--card);width:90%;max-width:400px;padding:25px;border-radius:20px;border: 1px solid var(--p);}
   </style>
 </head>
 <body>
 
   <header class="header">
     <div style="font-weight:bold; font-size:1.2rem;">Neuron <span style="color:var(--p);">Study</span></div>
-    <div id="user-info" style="font-size:0.9rem; background: var(--border); padding: 5px 12px; border-radius: 20px;">Загрузка...</div>
+    <div id="user-info" style="font-size:0.9rem;">Загрузка...</div>
   </header>
 
   <div class="container">
     <div id="section-schedule">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-        <h2 class="section-title"><i class="fas fa-calendar-week"></i> Расписание</h2>
-        <button onclick="openModal('modal-schedule')" style="background:var(--p); border:none; color:white; width:40px; height:40px; border-radius:50%; cursor:pointer; font-size: 1.5rem; display: flex; align-items: center; justify-content: center; transition: 0.3s;">+</button>
+        <h2 class="section-title"><i class="fas fa-calendar-alt"></i> Мое Расписание</h2>
+        <button onclick="openModal('modal-schedule')" style="background:var(--p); border:none; color:white; width:40px; height:40px; border-radius:50%; cursor:pointer; font-size: 1.2rem;">+</button>
       </div>
-      <div id="schedule-container">
-        </div>
+      <div id="schedule-container"></div>
     </div>
   </div>
 
   <div id="modal-schedule" class="modal">
     <div class="modal-content">
-      <h3 style="margin-bottom:20px; text-align: center; color: var(--s);">Добавить занятие</h3>
-      <label style="font-size: 0.8rem; color: var(--s); margin-left: 5px;">День недели</label>
+      <h3 style="margin-bottom:15px; text-align:center;">Новое занятие</h3>
       <select id="schedule-day" class="input-field">
         <option value="Понедельник">Понедельник</option>
         <option value="Вторник">Вторник</option>
@@ -65,10 +59,10 @@
         <option value="Суббота">Суббота</option>
         <option value="Воскресенье">Воскресенье</option>
       </select>
-      <input type="text" id="schedule-subject" placeholder="Название предмета" class="input-field">
+      <input type="text" id="schedule-subject" placeholder="Предмет" class="input-field">
       <input type="time" id="schedule-time" class="input-field">
-      <button class="btn" onclick="addSchedule()">Сохранить</button>
-      <button onclick="closeModal('modal-schedule')" style="margin-top:15px; background:none; border:none; color:var(--t); width:100%; cursor:pointer; opacity: 0.6;">Закрыть</button>
+      <button class="btn" onclick="addSchedule()">Добавить</button>
+      <button onclick="closeModal('modal-schedule')" style="margin-top:10px; background:none; border:none; color:var(--t); width:100%; cursor:pointer;">Отмена</button>
     </div>
   </div>
 
@@ -82,14 +76,10 @@
       appId: "1:589834476565:web:cd4db27c95950b7edd421c"
     };
 
-    if (!firebase.apps.length) {
-      firebase.initializeApp(firebaseConfig);
-    }
-    
+    firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
     const db = firebase.firestore();
 
-    // Начальное состояние (объект)
     let schedule = {
       "Понедельник": [], "Вторник": [], "Среда": [], 
       "Четверг": [], "Пятница": [], "Суббота": [], "Воскресенье": []
@@ -97,10 +87,9 @@
 
     auth.onAuthStateChanged(user => {
       if (user) {
-        document.getElementById('user-info').textContent = user.displayName || "Пользователь";
+        document.getElementById('user-info').textContent = user.displayName;
         loadData();
       } else {
-        // Если нет login.html, замени на всплывающее окно входа
         auth.signInWithPopup(new firebase.auth.GoogleAuthProvider());
       }
     });
@@ -109,67 +98,45 @@
       try {
         const doc = await db.collection('study').doc(auth.currentUser.uid).get();
         if (doc.exists) {
-          const cloudData = doc.data().schedule;
-          // ПРОВЕРКА: Если данные - объект и не массив, принимаем их
-          if (cloudData && typeof cloudData === 'object' && !Array.isArray(cloudData)) {
-            schedule = cloudData;
-          } else {
-            console.warn("Найден старый формат данных, используем пустой шаблон");
+          const rawData = doc.data().schedule;
+          // ПРОВЕРКА: если данные - объект и не массив, берем их. Иначе оставляем пустой шаблон.
+          if (rawData && typeof rawData === 'object' && !Array.isArray(rawData)) {
+            schedule = rawData;
           }
           renderSchedule();
         }
-      } catch (e) {
-        console.error("Ошибка загрузки:", e);
-      }
+      } catch (e) { console.error("Ошибка загрузки:", e); }
     }
 
     async function saveData() {
-      if (!auth.currentUser) return;
-      await db.collection('study').doc(auth.currentUser.uid).set({
-        schedule: schedule
-      }, { merge: true });
-      showToast("Сохранено в облако");
+      await db.collection('study').doc(auth.currentUser.uid).set({ schedule }, { merge: true });
     }
 
     function addSchedule() {
       const day = document.getElementById('schedule-day').value;
       const subject = document.getElementById('schedule-subject').value;
       const time = document.getElementById('schedule-time').value;
+      if (!subject || !time) return;
 
-      if (!subject || !time) return showToast("Заполните все поля!");
-
-      // Гарантируем наличие массива для дня
-      if (!schedule[day] || !Array.isArray(schedule[day])) {
-        schedule[day] = [];
-      }
+      if (!schedule[day] || !Array.isArray(schedule[day])) schedule[day] = [];
       
-      schedule[day].push({
-        id: Date.now(),
-        subject: subject,
-        time: time
-      });
-
-      // Сортировка по времени внутри дня
+      schedule[day].push({ id: Date.now(), subject, time });
       schedule[day].sort((a,b) => a.time.localeCompare(b.time));
 
       renderSchedule();
       saveData();
       closeModal('modal-schedule');
-      document.getElementById('schedule-subject').value = '';
-      document.getElementById('schedule-time').value = '';
     }
 
     function renderSchedule() {
       const container = document.getElementById('schedule-container');
       container.innerHTML = '';
-      
-      const daysOrder = ["Понедельник", "Вторник", "Среда", "Четверг", "Пятница", "Суббота", "Воскресенье"];
-      let hasAnyData = false;
+      const days = ["Понедельник", "Вторник", "Среда", "Четверг", "Пятница", "Суббота", "Воскресенье"];
 
-      daysOrder.forEach(day => {
-        const lessons = schedule[day] || [];
-        if (lessons.length === 0) return;
-        hasAnyData = true;
+      days.forEach(day => {
+        const lessons = schedule[day];
+        // Если это не массив (защита от ошибок), пропускаем
+        if (!Array.isArray(lessons) || lessons.length === 0) return;
 
         const dayBox = document.createElement('div');
         dayBox.className = 'schedule-day-group';
@@ -179,40 +146,23 @@
           const item = document.createElement('div');
           item.className = 'schedule-item';
           item.innerHTML = `
-            <div style="display: flex; flex-direction: column;">
-              <span style="font-size: 0.8rem; color: var(--s); font-weight: bold;">${lesson.time}</span>
-              <span style="font-size: 1.1rem;">${lesson.subject}</span>
-            </div>
-            <i class="fas fa-trash-alt" onclick="deleteLesson('${day}', ${lesson.id})" style="color: #ff4d4d; cursor:pointer; padding: 10px; opacity: 0.7;"></i>
+            <div><b>${lesson.time}</b> ${lesson.subject}</div>
+            <i class="fas fa-trash" onclick="deleteLesson('${day}', ${lesson.id})" style="cursor:pointer; opacity:0.5;"></i>
           `;
           dayBox.appendChild(item);
         });
         container.appendChild(dayBox);
       });
-
-      if (!hasAnyData) {
-        container.innerHTML = '<div style="text-align:center; opacity:0.4; padding:40px;">Нажмите +, чтобы добавить уроки</div>';
-      }
     }
 
     function deleteLesson(day, id) {
-      if (confirm("Удалить занятие?")) {
-        schedule[day] = schedule[day].filter(l => l.id !== id);
-        renderSchedule();
-        saveData();
-      }
+      schedule[day] = schedule[day].filter(l => l.id !== id);
+      renderSchedule();
+      saveData();
     }
 
     function openModal(id) { document.getElementById(id).classList.add('active'); }
     function closeModal(id) { document.getElementById(id).classList.remove('active'); }
-
-    function showToast(text) {
-      const t = document.createElement('div');
-      t.className = 'toast';
-      t.textContent = text;
-      document.body.appendChild(t);
-      setTimeout(() => t.remove(), 2500);
-    }
   </script>
 </body>
 </html>
