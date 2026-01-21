@@ -3,872 +3,190 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="manifest" href="/manifest.json">
-  <meta name="theme-color" content="#6366f1">
-  <title>Neuron Study</title>
+  <title>Neuron Study - Умное обучение</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/all.min.css">
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
   <style>
     :root {--p:#6366f1;--pd:#4f46e5;--s:#8f94fb;--bg:#0f0f2a;--t:#e5e7eb;--sb:#1a1a2e;--card:#1e1e2e;--border:#2b2b3b;}
     * {box-sizing:border-box;margin:0;padding:0;}
-    body {background:var(--bg);color:var(--t);font-family:'Segoe UI',Arial,sans-serif;padding-top:60px;overflow-x:hidden;}
-    .header {background:var(--sb);color:#fff;height:60px;display:flex;align-items:center;position:fixed;top:0;left:0;width:100%;z-index:100;box-shadow:0 4px 10px rgba(0,0,0,.4);}
-    .header .menu-icon {cursor:pointer;font-size:1.6rem;padding:0 20px;color:var(--s);transition:.2s;display:flex;flex-direction:column;gap:4px;}
-    .header .menu-icon:hover {color:#fff;}
-    .header .menu-icon span {display:block;width:24px;height:3px;background:var(--s);border-radius:2px;transition:.2s;}
-    .header .menu-icon:hover span {background:#fff;}
-    .header h1 {font-size:1.4rem;font-weight:700;background:linear-gradient(90deg,#57a8ff,#8f94fb);-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
-    .nav-auth-btn {position:absolute;right:15px;background:linear-gradient(45deg,var(--p),#57a8ff);color:#fff;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;font-weight:600;text-transform:uppercase;font-size:.85rem;transition:.3s;}
-    .nav-auth-btn:hover {transform:translateY(-2px);box-shadow:0 5px 15px rgba(99,102,241,.5);}
-    .nav-sidebar {position:fixed;top:0;left:-300px;width:280px;height:100%;background:var(--sb);padding-top:60px;transition:left .3s;z-index:99;overflow-y:auto;border-right:1px solid var(--border);}
-    .nav-sidebar.open {left:0;box-shadow:8px 0 25px rgba(0,0,0,.6);}
-    .sidebar-item {padding:16px 22px;cursor:pointer;font-size:1.05rem;border-bottom:1px solid var(--border);transition:all .25s;display:flex;align-items:center;gap:12px;}
-    .sidebar-item:hover {background:var(--card);color:var(--p);}
-    .sidebar-item.active {background:var(--card);color:var(--p);font-weight:600;border-left:4px solid var(--p);}
-    .sidebar-item i {color:var(--s);}
-    .sidebar-item.active i {color:var(--p);}
-    #overlay {position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.6);z-index:98;display:none;cursor:pointer;backdrop-filter:blur(3px);}
-    .content {padding:20px;max-width:1200px;margin:0 auto;}
-    .content-view {display:none;padding-top:20px;}
-    .content-view.active {display:block;animation:fadeIn .4s;}
-    @keyframes fadeIn {from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
-    .section-title {font-size:1.6rem;color:var(--s);margin-bottom:20px;padding-bottom:8px;border-bottom:2px solid var(--border);font-weight:600;}
-    .card {background:var(--card);border-radius:12px;padding:20px;margin-bottom:16px;box-shadow:0 4px 12px rgba(0,0,0,.3);border:1px solid var(--border);transition:transform .2s;}
-    .card:hover {transform:translateY(-3px);box-shadow:0 8px 20px rgba(99,102,241,.2);}
-    .form-group {margin-bottom:16px;}
-    .form-group label {display:block;margin-bottom:6px;color:var(--s);font-size:.95rem;font-weight:500;}
-    .form-group input, .form-group textarea, .form-group select {width:100%;padding:12px 14px;background:var(--card);border:1px solid var(--border);color:var(--t);border-radius:8px;font-size:1rem;transition:border .2s;}
-    .form-group input:focus, .form-group textarea:focus, .form-group select:focus {border-color:var(--p);outline:none;box-shadow:0 0 0 2px rgba(99,102,241,.3);}
-    .btn {background:linear-gradient(45deg,var(--p),var(--pd));color:#fff;border:none;padding:10px 18px;border-radius:8px;cursor:pointer;font-weight:600;transition:all .25s;font-size:.95rem;}
-    .btn:hover {background:linear-gradient(45deg,var(--pd),#3b3bc7);transform:translateY(-1px);box-shadow:0 4px 10px rgba(99,102,241,.4);}
-    .delete-btn {background:#ff6b6b;color:#fff;}
-    .delete-btn:hover {background:#ff4d4d;}
-    .day-section {position:relative;overflow:hidden;}
-    .day-title {font-size:1.6rem;color:var(--s);margin-bottom:12px;}
-    .edit-btn {position:absolute;top:16px;right:16px;background:var(--p);color:#fff;padding:6px 12px;font-size:.85rem;border-radius:6px;cursor:pointer;border:none;}
-    .edit-btn:hover {background:var(--pd);}
-    .empty-state {text-align:center;color:#777;padding:40px 0;}
-    .empty-state i {font-size:3rem;color:#444;margin-bottom:16px;display:block;}
-    .task-item, .note-item, .grade-item, .planner-item {display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px dashed var(--border);}
-    .task-item:last-child, .note-item:last-child, .grade-item:last-child, .planner-item:last-child {border:none;}
-    .task-title {font-weight:600;color:var(--t);}
-    .task-meta {font-size:.85rem;color:#aaa;}
-    .progress-bar {background:var(--border);height:8px;border-radius:4px;overflow:hidden;margin-top:8px;}
-    .progress-fill {background:linear-gradient(90deg,var(--p),#57a8ff);height:100%;border-radius:4px;transition:width .4s;}
-    .achievement-card {background:linear-gradient(135deg,#1e3a8a,#0f172a);border:1px solid #3b82f6;color:#fff;text-align:center;padding:16px;border-radius:12px;margin-bottom:12px;position:relative;}
-    .achievement-card h4 {margin:0 0 8px;color:#60a5fa;}
-    .achievement-card.completed {opacity:0.7;border-color:#10b981;}
-    .achievement-card.completed::after {content:"✓";position:absolute;top:8px;right:12px;font-size:1.5rem;color:#10b981;font-weight:bold;}
-    #auth-container {position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:var(--card);padding:32px;border-radius:16px;z-index:2000;max-width:400px;width:90%;text-align:center;border:2px solid var(--p);box-shadow:0 0 30px rgba(99,102,241,.5);display:none;}
-    .close-btn {position:absolute;top:10px;right:12px;background:none;color:#fff;font-size:1.6rem;cursor:pointer;opacity:.7;border:none;}
-    .close-btn:hover {opacity:1;}
-    .social-links {display:flex;gap:20px;justify-content:center;margin-top:20px;}
-    .social-links a {font-size:2rem;color:var(--s);transition:.3s;text-decoration:none;}
-    .social-links a:hover {color:var(--p);transform:scale(1.15);}
-    .avg-grade {display:inline-block;background:var(--p);color:#fff;padding:6px 12px;border-radius:20px;font-weight:600;margin:4px;}
-    .toast {position:fixed;bottom:20px;right:20px;background:var(--p);color:#fff;padding:16px 24px;border-radius:12px;box-shadow:0 8px 20px rgba(0,0,0,.4);z-index:10000;animation:toastIn .4s forwards;}
-    @keyframes toastIn {from{transform:translateX(100%);opacity:0}to{transform:none;opacity:1}}
-    .subject-avg {display:flex;flex-wrap:wrap;gap:8px;margin-top:16px;justify-content:center;}
+    body {background:var(--bg);color:var(--t);font-family:'Segoe UI',sans-serif;padding-top:60px;}
     
-    /* PWA Install Button */
-    #pwa-install-button {
-      position: fixed;
-      bottom: 20px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: linear-gradient(45deg, var(--p), var(--pd));
-      color: white;
-      border: none;
-      padding: 12px 24px;
-      border-radius: 25px;
-      cursor: pointer;
-      font-weight: 600;
-      font-size: 14px;
-      box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4);
-      z-index: 10000;
-      display: none;
-      animation: slideUp 0.3s ease-out;
-      font-family: 'Segoe UI', Arial, sans-serif;
-      transition: all 0.3s ease;
-    }
+    .header {background:var(--sb);height:60px;display:flex;align-items:center;position:fixed;top:0;width:100%;z-index:100;padding:0 20px;justify-content:space-between;}
+    .container {max-width:800px;margin:0 auto;padding:20px;}
     
-    #pwa-install-button:hover {
-      transform: translateX(-50%) scale(1.05);
-      box-shadow: 0 6px 20px rgba(99, 102, 241, 0.6);
-    }
+    .card {background:var(--card);border-radius:15px;padding:20px;margin-bottom:20px;border:1px solid var(--border);box-shadow:0 4px 15px rgba(0,0,0,0.3);}
+    .section-title {color:var(--p);margin-bottom:15px;display:flex;align-items:center;gap:10px;}
     
-    #pwa-install-button i {
-      margin-right: 8px;
-    }
+    .input-field {width:100%;padding:12px;margin-bottom:10px;background:var(--sb);border:1px solid var(--border);color:#fff;border-radius:8px;outline:none;}
+    .btn {background:var(--p);color:#fff;border:none;padding:12px 20px;border-radius:8px;cursor:pointer;width:100%;font-weight:bold;transition:0.3s;}
+    .btn:hover {background:var(--pd);}
+
+    .schedule-day-group {margin-bottom:20px;}
+    .day-title {color:var(--s);border-bottom:1px solid var(--border);padding-bottom:5px;margin-bottom:10px;font-size:1.1rem;}
+    .schedule-item {display:flex;justify-content:space-between;align-items:center;background:rgba(255,255,255,0.03);padding:10px;border-radius:8px;margin-bottom:5px;}
     
-    @keyframes slideUp {
-      from {
-        opacity: 0;
-        transform: translateX(-50%) translateY(20px);
-      }
-      to {
-        opacity: 1;
-        transform: translateX(-50%) translateY(0);
-      }
-    }
+    .modal {display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.8);z-index:1000;align-items:center;justify-content:center;}
+    .modal.active {display:flex;}
+    .modal-content {background:var(--card);width:90%;max-width:400px;padding:25px;border-radius:20px;position:relative;}
+
+    .nav-bar {position:fixed;bottom:0;width:100%;background:var(--sb);display:flex;justify-content:space-around;padding:10px 0;border-top:1px solid var(--border);}
+    .nav-item {color:var(--t);text-decoration:none;font-size:0.8rem;text-align:center;opacity:0.6;}
+    .nav-item.active {color:var(--p);opacity:1;}
     
-    @media (max-width:600px) {
-      .header h1{font-size:1.2rem}
-      .edit-btn{position:static;display:block;width:100%;margin-top:12px;border-radius:8px}
-      .nav-auth-btn{font-size:.75rem;padding:6px 10px}
-      #auth-container{padding:24px}
-      #pwa-install-button {
-        bottom: 80px;
-        font-size: 13px;
-        padding: 10px 20px;
-      }
-    }
+    .toast {position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:var(--p);padding:10px 20px;border-radius:20px;z-index:2000;}
   </style>
 </head>
 <body>
+
   <header class="header">
-    <div class="menu-icon" id="menuIcon">
-      <span></span><span></span><span></span>
-    </div>
-    <h1>Neuron Study</h1>
-    <button id="mainAuthButton" class="nav-auth-btn">Войти</button>
+    <div style="font-weight:bold; font-size:1.2rem;">Neuron <span style="color:var(--p);">Study</span></div>
+    <div id="user-info" style="font-size:0.9rem;">Вход...</div>
   </header>
 
-  <aside class="nav-sidebar" id="navSidebar">
-    <div class="sidebar-item active" data-view="schedule"><i class="fas fa-calendar-alt"></i> Расписание</div>
-    <div class="sidebar-item" data-view="homework"><i class="fas fa-tasks"></i> ДЗ</div>
-    <div class="sidebar-item" data-view="notes"><i class="fas fa-sticky-note"></i> Заметки</div>
-    <div class="sidebar-item" data-view="grades"><i class="fas fa-chart-line"></i> Оценки</div>
-    <div class="sidebar-item" data-view="planner"><i class="fas fa-clipboard-check"></i> Планировщик</div>
-    <div class="sidebar-item" data-view="achievements"><i class="fas fa-trophy"></i> Достижения</div>
-    <div class="sidebar-item" data-view="about"><i class="fas fa-info-circle"></i> О нас</div>
-    <hr style="border-color:var(--border);margin:16px 0">
-    <div class="sidebar-item" id="menu-logout" style="color:#ff6b6b;display:none"><i class="fas fa-sign-out-alt"></i> Выйти</div>
-  </aside>
-
-  <div id="overlay"></div>
-
-  <div class="content">
-    <div id="schedule-view" class="content-view active">
-      <h2 class="section-title">Расписание</h2>
-      <div id="schedule-content"></div>
-    </div>
-
-    <div id="homework-view" class="content-view">
-      <h2 class="section-title">Домашние задания</h2>
-      <div class="card">
-        <div class="form-group"><input id="hw-subject" placeholder="Предмет"></div>
-        <div class="form-group"><input id="hw-title" placeholder="Задание"></div>
-        <div class="form-group"><input type="date" id="hw-deadline"></div>
-        <button class="btn" id="add-hw">Добавить</button>
+  <div class="container">
+    <div id="section-schedule">
+      <div class="section-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+        <h2 class="section-title"><i class="fas fa-calendar-alt"></i> Мое Расписание</h2>
+        <button onclick="openModal('modal-schedule')" style="background:var(--p); border:none; color:white; width:35px; height:35px; border-radius:50%; cursor:pointer;">+</button>
       </div>
-      <div id="hw-list"></div>
-    </div>
-
-    <div id="notes-view" class="content-view">
-      <h2 class="section-title">Заметки</h2>
-      <div class="card">
-        <div class="form-group"><input id="note-subject" placeholder="Предмет"></div>
-        <div class="form-group"><input id="note-title" placeholder="Заголовок"></div>
-        <div class="form-group"><textarea id="note-content" rows="4" placeholder="Текст заметки"></textarea></div>
-        <button class="btn" id="save-note">Сохранить</button>
-      </div>
-      <div id="notes-list"></div>
-    </div>
-
-    <div id="grades-view" class="content-view">
-      <h2 class="section-title">Оценки</h2>
-      <div class="card">
-        <div class="form-group"><input id="grade-subject" placeholder="Предмет"></div>
-        <div class="form-group"><input type="number" id="grade-value" min="1" max="5" placeholder="Оценка (1-5)"></div>
-        <div class="form-group"><input type="date" id="grade-date"></div>
-        <button class="btn" id="add-grade">Добавить</button>
-      </div>
-      <div id="grades-list"></div>
-      <div id="subject-averages" class="subject-avg"></div>
-      <canvas id="grades-chart" height="200" style="margin-top:20px"></canvas>
-    </div>
-
-    <div id="planner-view" class="content-view">
-      <h2 class="section-title">Планировщик</h2>
-      <div class="card">
-        <div class="form-group"><input id="planner-goal" placeholder="Цель"></div>
-        <div class="form-group"><input type="date" id="planner-deadline" placeholder="Дедлайн"></div>
-        <div class="form-group">
-          <select id="planner-reminder">
-            <option value="0">Без напоминания</option>
-            <option value="3600000">За 1 час</option>
-            <option value="86400000">За 1 день</option>
-            <option value="604800000">За неделю</option>
-          </select>
+      <div id="schedule-container">
         </div>
-        <button class="btn" id="add-planner">Добавить</button>
-      </div>
-      <div id="planner-list"></div>
-    </div>
-
-    <div id="achievements-view" class="content-view">
-      <h2 class="section-title">Достижения</h2>
-      <div id="achievements-list"></div>
-      <p style="text-align:center;margin-top:20px;font-size:1.1rem">Очки: <strong id="user-points" style="color:var(--p)">0</strong></p>
-    </div>
-
-    <div id="about-view" class="content-view">
-      <h2 class="section-title">О нас</h2>
-      <div class="card">
-        <p style="text-align:center;margin-bottom:20px">Neuron Study — часть экосистемы Neuron. Умный помощник для учёбы с оффлайн-доступом и синхронизацией.</p>
-        <div class="social-links">
-          <a href="https://t.me/neuron_ecosystem" target="_blank" title="Telegram"><i class="fab fa-telegram"></i></a>
-          <a href="https://vk.com/club233118101" target="_blank" title="ВКонтакте"><i class="fab fa-vk"></i></a>
-          <a href="https://neuron-p2p.ru" target="_blank" title="Веб-сайт"><i class="fas fa-globe"></i></a>
-        </div>
-      </div>
     </div>
   </div>
 
-  <div id="auth-container">
-    <h2 style="color:var(--p);margin-bottom:20px">Вход / Регистрация</h2>
-    <input type="email" id="email" placeholder="Email" class="form-group">
-    <input type="password" id="password" placeholder="Пароль" class="form-group">
-    <button id="register" class="btn" style="width:48%;margin:5px 1%">Регистрация</button>
-    <button id="login" class="btn" style="width:48%;margin:5px 1%">Вход</button>
-    <button id="google" class="btn" style="width:96%;margin:10px 2%;background:#4285f4">Google</button>
-    <button class="close-btn" id="close-auth">×</button>
-  </div>
-
-  <div id="schedule-editor" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:var(--card);padding:24px;border-radius:16px;z-index:3000;max-width:500px;width:90%;box-shadow:0 0 30px rgba(99,102,241,.6);border:1px solid var(--p)">
-    <h3 id="editor-day" style="color:var(--s);margin-bottom:16px"></h3>
-    <textarea id="editor-text" rows="10" class="form-group" placeholder="Введите расписание..."></textarea>
-    <div style="display:flex;gap:12px;margin-top:16px">
-      <button class="btn" id="save-schedule" style="flex:1">Сохранить</button>
-      <button class="btn" id="cancel-schedule" style="flex:1;background:#666">Отмена</button>
+  <div id="modal-schedule" class="modal">
+    <div class="modal-content">
+      <h3 style="margin-bottom:15px;">Добавить занятие</h3>
+      <select id="schedule-day" class="input-field">
+        <option value="Понедельник">Понедельник</option>
+        <option value="Вторник">Вторник</option>
+        <option value="Среда">Среда</option>
+        <option value="Четверг">Четверг</option>
+        <option value="Пятница">Пятница</option>
+        <option value="Суббота">Суббота</option>
+        <option value="Воскресенье">Воскресенье</option>
+      </select>
+      <input type="text" id="schedule-subject" placeholder="Предмет" class="input-field">
+      <input type="time" id="schedule-time" class="input-field">
+      <button class="btn" onclick="addSchedule()">Сохранить</button>
+      <button onclick="closeModal('modal-schedule')" style="margin-top:10px; background:none; border:none; color:var(--t); width:100%; cursor:pointer;">Отмена</button>
     </div>
   </div>
 
-  <!-- PWA Install Button -->
-  <button id="pwa-install-button">
-    <i class="fas fa-download"></i>Установить приложение
-  </button>
-
-  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
-
-<script>
-    // ==================== FIREBASE CONFIGURATION ====================
-    const firebaseConfig = { 
-      apiKey: "AIzaSyDOaDVzzPjyYm4HWMND2XYWjLy_h4wty5s", 
-      authDomain: "neuron-ecosystem-2025.firebaseapp.com", 
-      projectId: "neuron-ecosystem-2025", 
-      storageBucket: "neuron-ecosystem-2025.firebasestorage.app", 
-      messagingSenderId: "589834476565", 
-      appId: "1:589834476565:web:c9c878a905ecece4dd421c" 
+  <script>
+    // КОНФИГУРАЦИЯ FIREBASE (используй свою)
+    const firebaseConfig = {
+      apiKey: "AIzaSyDOaDVzzPjyYm4HWMND2XYWjLy_h4wty5s",
+      authDomain: "neuron-ecosystem-2025.firebaseapp.com",
+      projectId: "neuron-ecosystem-2025",
+      storageBucket: "neuron-ecosystem-2025.firebasestorage.app",
+      messagingSenderId: "589834476565",
+      appId: "1:589834476565:web:cd4db27c95950b7edd421c"
     };
-    
+
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
     const db = firebase.firestore();
-    const googleProvider = new firebase.auth.GoogleAuthProvider();
 
-    // ==================== PWA INSTALL MANAGER ====================
-    let deferredPrompt;
-    const installButton = document.getElementById('pwa-install-button');
-
-    window.addEventListener('beforeinstallprompt', (e) => {
-      e.preventDefault();
-      deferredPrompt = e;
-      showInstallButton();
-    });
-
-    function showInstallButton() {
-      if (isAppInstalled()) return;
-      installButton.style.display = 'block';
-      setTimeout(() => installButton.style.display = 'none', 15000);
-    }
-
-    installButton.addEventListener('click', async () => {
-      if (!deferredPrompt) return;
-      deferredPrompt.prompt();
-      const { outcome } = await deferredPrompt.userChoice;
-      if (outcome === 'accepted') showToast('📥 Установка...');
-      deferredPrompt = null;
-      installButton.style.display = 'none';
-    });
-
-    function isAppInstalled() {
-      return window.matchMedia('(display-mode: standalone)').matches;
-    }
-
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/sw.js').catch(console.error);
-      });
-    }
-
-    // ==================== DATA KEYS FOR LOCAL STORAGE ====================
-    const LS_KEYS = {
-      SCHEDULE: 'ns_schedule',
-      HOMEWORK: 'ns_homework',
-      NOTES: 'ns_notes',
-      GRADES: 'ns_grades',
-      PLANNER: 'ns_planner',
-      POINTS: 'ns_points',
-      ACHIEVEMENTS: 'ns_achievements'
+    let schedule = {
+      "Понедельник": [], "Вторник": [], "Среда": [], 
+      "Четверг": [], "Пятница": [], "Суббота": [], "Воскресенье": []
     };
 
-    // ==================== APPLICATION CODE ====================
-    const menuIcon = document.getElementById('menuIcon');
-    const sidebar = document.getElementById('navSidebar');
-    const overlay = document.getElementById('overlay');
-    const authModal = document.getElementById('auth-container');
-    const mainAuthBtn = document.getElementById('mainAuthButton');
-    const logoutBtn = document.getElementById('menu-logout');
-
-    const DAYS = ["Понедельник","Вторник","Среда","Четверг","Пятница","Суббота","Воскресенье"];
-    
-    // Глобальные переменные данных
-    let schedule = {};
-    let homework = [];
-    let notes = [];
-    let grades = [];
-    let planner = [];
-    let points = 0;
-    let achievements = [];
-    let gradesChart = null;
-
-    function initUI() {
-      menuIcon.onclick = () => {
-        sidebar.classList.toggle('open');
-        overlay.style.display = sidebar.classList.contains('open') ? 'block' : 'none';
-      };
-
-      overlay.onclick = () => {
-        sidebar.classList.remove('open');
-        overlay.style.display = 'none';
-        authModal.style.display = 'none';
-        document.getElementById('schedule-editor').style.display = 'none';
-      };
-
-      document.querySelectorAll('.sidebar-item[data-view]').forEach(item => {
-        item.onclick = () => {
-          document.querySelectorAll('.content-view').forEach(v => v.classList.remove('active'));
-          document.getElementById(item.dataset.view + '-view').classList.add('active');
-          document.querySelectorAll('.sidebar-item').forEach(i => i.classList.remove('active'));
-          item.classList.add('active');
-          sidebar.classList.remove('open');
-          overlay.style.display = 'none';
-        };
-      });
-
-      mainAuthBtn.onclick = () => {
-        if (auth.currentUser) {
-          auth.signOut();
-        } else {
-          authModal.style.display = 'block';
-          overlay.style.display = 'block';
-        }
-      };
-
-      document.getElementById('close-auth').onclick = () => {
-        authModal.style.display = 'none';
-        overlay.style.display = 'none';
-      };
-
-      document.getElementById('register').onclick = handleEmailRegister;
-      document.getElementById('login').onclick = handleEmailLogin;
-      document.getElementById('google').onclick = handleGoogleAuth;
-      logoutBtn.onclick = () => auth.signOut();
-
-      document.getElementById('add-hw').onclick = addHomework;
-      document.getElementById('save-note').onclick = addNote;
-      document.getElementById('add-grade').onclick = addGrade;
-      document.getElementById('add-planner').onclick = addPlanner;
-      document.getElementById('save-schedule').onclick = saveSchedule;
-      document.getElementById('cancel-schedule').onclick = cancelSchedule;
-    }
-
-    // --- AUTH HANDLERS ---
-    async function handleEmailRegister() {
-      const email = document.getElementById('email').value;
-      const password = document.getElementById('password').value;
-      if (!email || !password) return showToast('Заполните поля');
-      try {
-        await auth.createUserWithEmailAndPassword(email, password);
-        authModal.style.display = 'none';
-        overlay.style.display = 'none';
-      } catch (e) { showToast(getAuthErrorMessage(e)); }
-    }
-
-    async function handleEmailLogin() {
-      const email = document.getElementById('email').value;
-      const password = document.getElementById('password').value;
-      try {
-        await auth.signInWithEmailAndPassword(email, password);
-        authModal.style.display = 'none';
-        overlay.style.display = 'none';
-      } catch (e) { showToast(getAuthErrorMessage(e)); }
-    }
-
-    async function handleGoogleAuth() {
-      try {
-        await auth.signInWithPopup(googleProvider);
-        authModal.style.display = 'none';
-        overlay.style.display = 'none';
-      } catch (e) { showToast(getAuthErrorMessage(e)); }
-    }
-
-    function getAuthErrorMessage(error) {
-      return `Ошибка: ${error.message}`;
-    }
-
-    // --- LOGIC: AUTH STATE & DATA LOADING ---
-    auth.onAuthStateChanged(async (user) => {
+    auth.onAuthStateChanged(user => {
       if (user) {
-        // Пользователь вошел -> Грузим из Firebase
-        mainAuthBtn.textContent = 'Выйти';
-        logoutBtn.style.display = 'block';
-        showToast(`Привет, ${user.displayName || 'Студент'}!`);
-        await loadFirebaseData(user.uid);
+        document.getElementById('user-info').textContent = user.displayName || "Студент";
+        loadData();
       } else {
-        // Пользователь вышел -> Грузим из LocalStorage
-        mainAuthBtn.textContent = 'Войти';
-        logoutBtn.style.display = 'none';
-        loadLocalData();
-        renderAll();
+        location.href = "login.html"; // Или вызов входа
       }
     });
 
-    // Загрузка локальных данных
-    function loadLocalData() {
-      schedule = JSON.parse(localStorage.getItem(LS_KEYS.SCHEDULE)) || {};
-      homework = JSON.parse(localStorage.getItem(LS_KEYS.HOMEWORK)) || [];
-      notes = JSON.parse(localStorage.getItem(LS_KEYS.NOTES)) || [];
-      grades = JSON.parse(localStorage.getItem(LS_KEYS.GRADES)) || [];
-      planner = JSON.parse(localStorage.getItem(LS_KEYS.PLANNER)) || [];
-      points = parseInt(localStorage.getItem(LS_KEYS.POINTS)) || 0;
-      achievements = JSON.parse(localStorage.getItem(LS_KEYS.ACHIEVEMENTS)) || [];
-    }
-
-    // Загрузка данных из Firebase
-    async function loadFirebaseData(uid) {
-      try {
-        showToast('Синхронизация...');
-        const userDoc = await db.collection('users').doc(uid).get();
-        if (userDoc.exists) {
-          const data = userDoc.data();
-          schedule = data.schedule || {};
-          points = data.points || 0;
-          achievements = data.achievements || [];
-        }
-
-        const [hwSnap, notesSnap, gradesSnap, planSnap] = await Promise.all([
-          db.collection('users').doc(uid).collection('homework').get(),
-          db.collection('users').doc(uid).collection('notes').get(),
-          db.collection('users').doc(uid).collection('grades').get(),
-          db.collection('users').doc(uid).collection('planner').get()
-        ]);
-
-        homework = hwSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        notes = notesSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        grades = gradesSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        planner = planSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-
-        renderAll();
-        showToast('Данные загружены');
-      } catch (error) {
-        console.error(error);
-        showToast('Ошибка загрузки');
+    async function loadData() {
+      const doc = await db.collection('study').doc(auth.currentUser.uid).get();
+      if (doc.exists && doc.data().schedule) {
+        schedule = doc.data().schedule;
+        renderSchedule();
       }
     }
 
-    // --- LOGIC: RENDERING & SAVING ---
+    async function saveData() {
+      await db.collection('study').doc(auth.currentUser.uid).set({
+        schedule: schedule
+      }, { merge: true });
+      showToast("Данные сохранены");
+    }
+
+    function addSchedule() {
+      const day = document.getElementById('schedule-day').value;
+      const subject = document.getElementById('schedule-subject').value;
+      const time = document.getElementById('schedule-time').value;
+
+      if (!subject || !time) return alert("Заполните поля");
+
+      if (!schedule[day]) schedule[day] = [];
+      
+      schedule[day].push({
+        id: Date.now(),
+        subject: subject,
+        time: time
+      });
+
+      // Сортировка по времени
+      schedule[day].sort((a,b) => a.time.localeCompare(b.time));
+
+      renderSchedule();
+      saveData();
+      closeModal('modal-schedule');
+    }
 
     function renderSchedule() {
-      const c = document.getElementById('schedule-content'); 
-      c.innerHTML = '';
-      DAYS.forEach(d => {
-        const div = document.createElement('div'); 
-        div.className = 'card day-section';
-        div.innerHTML = `
-          <h3 class="day-title">${d}</h3>
-          <button class="edit-btn" onclick="editDay('${d}')">Редактировать</button>
-          <div style="margin-top:50px;white-space:pre-line;font-size:1rem;line-height:1.6">
-            ${schedule[d] ? schedule[d].replace(/\\n/g,'<br>') : '<p class="empty-state"><i class="far fa-calendar-alt"></i><br>Пусто</p>'}
-          </div>
-        `;
-        c.appendChild(div);
-      });
-    }
-
-    window.editDay = d => {
-      document.getElementById('editor-day').textContent = d;
-      document.getElementById('editor-text').value = schedule[d] || '';
-      document.getElementById('schedule-editor').style.display = 'block';
-      overlay.style.display = 'block';
-    };
-
-    function saveSchedule() {
-      const d = document.getElementById('editor-day').textContent;
-      schedule[d] = document.getElementById('editor-text').value;
-      renderSchedule();
-      document.getElementById('schedule-editor').style.display = 'none';
-      overlay.style.display = 'none';
-
-      // SAVE LOGIC
-      if (auth.currentUser) {
-        db.collection('users').doc(auth.currentUser.uid).set({ schedule }, { merge: true });
-      } else {
-        localStorage.setItem(LS_KEYS.SCHEDULE, JSON.stringify(schedule));
-      }
-    }
-
-    function cancelSchedule() { 
-      document.getElementById('schedule-editor').style.display = 'none'; 
-      overlay.style.display = 'none'; 
-    }
-
-    function addHomework() {
-      const s = document.getElementById('hw-subject').value.trim();
-      const t = document.getElementById('hw-title').value.trim();
-      const dl = document.getElementById('hw-deadline').value;
-      if (!s || !t || !dl) return showToast('Заполните все поля');
-      
-      const task = { id: Date.now().toString(), subject: s, title: t, deadline: dl, createdAt: new Date().toISOString() };
-      
-      homework.push(task); 
-      renderHomework(); 
-      addPoints(5); 
-      checkAchievements();
-      clearInputs(['hw-subject','hw-title','hw-deadline']);
-
-      // SAVE LOGIC
-      if (auth.currentUser) {
-        db.collection('users').doc(auth.currentUser.uid).collection('homework').doc(task.id).set(task);
-      } else {
-        localStorage.setItem(LS_KEYS.HOMEWORK, JSON.stringify(homework));
-      }
-    }
-
-    function renderHomework() {
-      const l = document.getElementById('hw-list'); 
-      l.innerHTML = '';
-      if (homework.length === 0) return l.innerHTML = '<div class="card"><div class="empty-state"><i class="fas fa-tasks"></i><br>Нет заданий</div></div>';
-      
-      homework.sort((a,b) => a.deadline.localeCompare(b.deadline)).forEach(t => {
-        const div = document.createElement('div'); 
-        div.className = 'card';
-        div.innerHTML = `
-          <div class="task-item">
-            <div>
-              <div class="task-title">${t.title}</div>
-              <div class="task-meta">${t.subject} • ${new Date(t.deadline).toLocaleDateString()}</div>
-            </div>
-            <button class="delete-btn btn" onclick="deleteTask('${t.id}')">×</button>
-          </div>
-        `;
-        l.appendChild(div);
-      });
-    }
-
-    window.deleteTask = async (id) => { 
-      homework = homework.filter(t => t.id !== id); 
-      renderHomework(); 
-      if (auth.currentUser) {
-        await db.collection('users').doc(auth.currentUser.uid).collection('homework').doc(id).delete();
-      } else {
-        localStorage.setItem(LS_KEYS.HOMEWORK, JSON.stringify(homework));
-      }
-    };
-
-    function addNote() {
-      const s = document.getElementById('note-subject').value.trim();
-      const t = document.getElementById('note-title').value.trim();
-      const c = document.getElementById('note-content').value.trim();
-      if (!s || !t || !c) return showToast('Заполните все поля');
-      
-      const note = { id: Date.now().toString(), subject: s, title: t, content: c, date: new Date().toISOString() };
-      
-      notes.push(note); 
-      renderNotes(); 
-      addPoints(3); 
-      checkAchievements();
-      clearInputs(['note-subject','note-title','note-content']);
-
-      // SAVE LOGIC
-      if (auth.currentUser) {
-        db.collection('users').doc(auth.currentUser.uid).collection('notes').doc(note.id).set(note);
-      } else {
-        localStorage.setItem(LS_KEYS.NOTES, JSON.stringify(notes));
-      }
-    }
-
-    function renderNotes() {
-      const l = document.getElementById('notes-list'); 
-      l.innerHTML = '';
-      if (notes.length === 0) return l.innerHTML = '<div class="card"><div class="empty-state"><i class="fas fa-sticky-note"></i><br>Нет заметок</div></div>';
-      
-      notes.sort((a,b) => b.date.localeCompare(a.date)).forEach(n => {
-        const div = document.createElement('div'); 
-        div.className = 'card';
-        div.innerHTML = `
-          <div class="note-item">
-            <div>
-              <div class="task-title">${n.title}</div>
-              <div class="task-meta">${n.subject} • ${new Date(n.date).toLocaleDateString()}</div>
-            </div>
-            <button class="delete-btn btn" onclick="deleteNote('${n.id}')">×</button>
-          </div>
-        `;
-        l.appendChild(div);
-      });
-    }
-
-    window.deleteNote = async (id) => { 
-      notes = notes.filter(n => n.id !== id); 
-      renderNotes(); 
-      if (auth.currentUser) {
-        await db.collection('users').doc(auth.currentUser.uid).collection('notes').doc(id).delete();
-      } else {
-        localStorage.setItem(LS_KEYS.NOTES, JSON.stringify(notes));
-      }
-    };
-
-    function addGrade() {
-      const s = document.getElementById('grade-subject').value.trim();
-      const v = parseInt(document.getElementById('grade-value').value);
-      const d = document.getElementById('grade-date').value;
-      if (!s || isNaN(v) || v<1 || v>5 || !d) return showToast('Проверьте данные');
-      
-      const grade = { id: Date.now().toString(), subject: s, value: v, date: d, createdAt: new Date().toISOString() };
-      
-      grades.push(grade); 
-      renderGrades(); 
-      updateSubjectAverages(); 
-      addPoints(v); 
-      checkAchievements();
-      clearInputs(['grade-subject','grade-value','grade-date']);
-
-      // SAVE LOGIC
-      if (auth.currentUser) {
-        db.collection('users').doc(auth.currentUser.uid).collection('grades').doc(grade.id).set(grade);
-      } else {
-        localStorage.setItem(LS_KEYS.GRADES, JSON.stringify(grades));
-      }
-    }
-
-    function renderGrades() {
-      const l = document.getElementById('grades-list'); 
-      l.innerHTML = '';
-      if (grades.length === 0) {
-        if(gradesChart) gradesChart.destroy();
-        return l.innerHTML = '<div class="card"><div class="empty-state"><i class="fas fa-chart-line"></i><br>Нет оценок</div></div>';
-      }
-      
-      grades.sort((a,b) => b.date.localeCompare(a.date)).forEach(g => {
-        const div = document.createElement('div'); 
-        div.className = 'card';
-        div.innerHTML = `
-          <div class="grade-item">
-            <div>
-              <div class="task-title">${g.subject}</div>
-              <div class="task-meta">Оценка: ${g.value} • ${new Date(g.date).toLocaleDateString()}</div>
-            </div>
-            <button class="delete-btn btn" onclick="deleteGrade('${g.id}')">×</button>
-          </div>
-        `;
-        l.appendChild(div);
-      });
-      updateChart();
-    }
-
-    function updateSubjectAverages() {
-      const container = document.getElementById('subject-averages'); 
+      const container = document.getElementById('schedule-container');
       container.innerHTML = '';
-      const subjects = {};
-      grades.forEach(g => { 
-        if (!subjects[g.subject]) subjects[g.subject] = []; 
-        subjects[g.subject].push(g.value); 
-      });
       
-      Object.keys(subjects).forEach(sub => {
-        const avg = (subjects[sub].reduce((a,b)=>a+b,0)/subjects[sub].length).toFixed(2);
-        const span = document.createElement('span'); 
-        span.className = 'avg-grade'; 
-        span.textContent = `${sub}: ${avg}`;
-        container.appendChild(span);
-      });
-    }
+      const days = ["Понедельник", "Вторник", "Среда", "Четверг", "Пятница", "Суббота", "Воскресенье"];
 
-    function updateChart() {
-      const ctx = document.getElementById('grades-chart').getContext('2d');
-      const subjects = [...new Set(grades.map(g => g.subject))];
-      const datasets = subjects.map(sub => {
-        const subjectGrades = grades.filter(g => g.subject === sub)
-          .sort((a, b) => new Date(a.date) - new Date(b.date));
-        
-        return {
-          label: sub, 
-          data: subjectGrades.map(g => g.value), 
-          borderColor: `hsl(${Math.random()*360}, 70%, 50%)`, 
-          backgroundColor: `hsla(${Math.random()*360}, 70%, 50%, 0.1)`,
-          tension: 0.3,
-          fill: false
-        };
-      });
-      
-      if (gradesChart) gradesChart.destroy();
-      gradesChart = new Chart(ctx, {
-        type: 'line',
-        data: {
-          labels: [...new Set(grades.map(g => new Date(g.date).toLocaleDateString('ru')))], 
-          datasets
-        },
-        options: { responsive: true, scales: { y: { min: 1, max: 5, ticks: { stepSize: 1 } } } }
-      });
-    }
+      days.forEach(day => {
+        const lessons = schedule[day] || [];
+        if (lessons.length === 0) return;
 
-    window.deleteGrade = async (id) => { 
-      grades = grades.filter(g => g.id !== id); 
-      renderGrades(); 
-      updateSubjectAverages(); 
-      if (auth.currentUser) {
-        await db.collection('users').doc(auth.currentUser.uid).collection('grades').doc(id).delete();
-      } else {
-        localStorage.setItem(LS_KEYS.GRADES, JSON.stringify(grades));
-      }
-    };
+        const dayBox = document.createElement('div');
+        dayBox.className = 'schedule-day-group';
+        dayBox.innerHTML = `<div class="day-title">${day}</div>`;
 
-    function addPlanner() {
-      const g = document.getElementById('planner-goal').value.trim();
-      const dl = document.getElementById('planner-deadline').value;
-      const r = parseInt(document.getElementById('planner-reminder').value);
-      if (!g || !dl) return showToast('Укажите цель и дедлайн');
-      
-      const item = { id: Date.now().toString(), goal: g, deadline: dl, reminder: r, progress: 0, createdAt: new Date().toISOString() };
-      
-      planner.push(item); 
-      renderPlanner(); 
-      addPoints(4); 
-      checkAchievements();
-      clearInputs(['planner-goal','planner-deadline']);
-
-      // SAVE LOGIC
-      if (auth.currentUser) {
-        db.collection('users').doc(auth.currentUser.uid).collection('planner').doc(item.id).set(item);
-      } else {
-        localStorage.setItem(LS_KEYS.PLANNER, JSON.stringify(planner));
-      }
-    }
-
-    function renderPlanner() {
-      const l = document.getElementById('planner-list'); 
-      l.innerHTML = '';
-      if (planner.length === 0) return l.innerHTML = '<div class="card"><div class="empty-state"><i class="fas fa-clipboard-check"></i><br>Нет целей</div></div>';
-      
-      planner.forEach(p => {
-        const div = document.createElement('div'); 
-        div.className = 'card';
-        div.innerHTML = `
-          <div class="planner-item">
-            <div style="flex:1">
-              <div class="task-title">${p.goal}</div>
-              <div class="task-meta">Дедлайн: ${new Date(p.deadline).toLocaleDateString()}</div>
-              <div class="progress-bar"><div class="progress-fill" style="width:${p.progress}%"></div></div>
+        lessons.forEach(lesson => {
+          const item = document.createElement('div');
+          item.className = 'schedule-item';
+          item.innerHTML = `
+            <div>
+              <span style="font-weight:bold;">${lesson.time}</span> - ${lesson.subject}
             </div>
-            <button class="delete-btn btn" onclick="deletePlanner('${p.id}')">×</button>
-          </div>
-        `;
-        l.appendChild(div);
+            <i class="fas fa-trash" onclick="deleteLesson('${day}', ${lesson.id})" style="cursor:pointer; opacity:0.5;"></i>
+          `;
+          dayBox.appendChild(item);
+        });
+        container.appendChild(dayBox);
       });
     }
 
-    window.deletePlanner = async (id) => { 
-      planner = planner.filter(p => p.id !== id); 
-      renderPlanner(); 
-      if (auth.currentUser) {
-        await db.collection('users').doc(auth.currentUser.uid).collection('planner').doc(id).delete();
-      } else {
-        localStorage.setItem(LS_KEYS.PLANNER, JSON.stringify(planner));
-      }
-    };
-
-    const ACHIEVEMENTS = [
-      {id:1, title:"Первая заметка", desc:"Создайте свою первую заметку", check:() => notes.length >= 1},
-      {id:2, title:"5 ДЗ подряд", desc:"Добавьте 5 домашних заданий", check:() => homework.length >= 5},
-      {id:4, title:"Средний балл 5.0", desc:"Средний балл 5.0 по предмету", check:() => {
-        const subs = {}; 
-        grades.forEach(g => { if (!subs[g.subject]) subs[g.subject] = []; subs[g.subject].push(g.value); });
-        return Object.values(subs).some(arr => arr.reduce((a,b)=>a+b,0)/arr.length >= 5);
-      }},
-      {id:6, title:"Планировщик", desc:"Создайте 3 цели", check:() => planner.length >= 3},
-      {id:8, title:"100 очков", desc:"Наберите 100 очков", check:() => points >= 100}
-    ];
-
-    function renderAchievements() {
-      const l = document.getElementById('achievements-list'); 
-      l.innerHTML = '';
-      let newUnlock = false;
-
-      ACHIEVEMENTS.forEach(a => {
-        const completed = achievements.includes(a.id) || a.check();
-        if (completed && !achievements.includes(a.id)) { 
-          achievements.push(a.id); 
-          showToast(`🏆 Достижение: ${a.title}!`); 
-          newUnlock = true;
-        }
-        const div = document.createElement('div'); 
-        div.className = `achievement-card ${completed ? 'completed' : ''}`;
-        div.innerHTML = `<h4>${a.title}</h4><p>${a.desc}</p>`;
-        l.appendChild(div);
-      });
-
-      if (newUnlock) {
-        if (auth.currentUser) {
-          db.collection('users').doc(auth.currentUser.uid).set({ achievements }, {merge:true});
-        } else {
-          localStorage.setItem(LS_KEYS.ACHIEVEMENTS, JSON.stringify(achievements));
-        }
-      }
+    function deleteLesson(day, id) {
+      schedule[day] = schedule[day].filter(l => l.id !== id);
+      renderSchedule();
+      saveData();
     }
 
-    function checkAchievements() { renderAchievements(); }
+    function openModal(id) { document.getElementById(id).classList.add('active'); }
+    function closeModal(id) { document.getElementById(id).classList.remove('active'); }
 
-    function showToast(msg) {
-      const t = document.createElement('div'); 
-      t.className = 'toast'; t.textContent = msg; 
+    function showToast(text) {
+      const t = document.createElement('div');
+      t.className = 'toast';
+      t.textContent = text;
       document.body.appendChild(t);
-      setTimeout(() => t.remove(), 3000);
+      setTimeout(() => t.remove(), 2000);
     }
-
-    function renderAll() { 
-      renderSchedule(); renderHomework(); renderNotes(); renderGrades(); 
-      updateSubjectAverages(); renderPlanner(); renderAchievements(); 
-      document.getElementById('user-points').textContent = points; 
-    }
-
-    function clearInputs(ids) { 
-      ids.forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.value = '';
-      });
-    }
-
-    function addPoints(p) { 
-      points += p; 
-      document.getElementById('user-points').textContent = points; 
-      if (auth.currentUser) {
-        db.collection('users').doc(auth.currentUser.uid).set({ points }, {merge:true});
-      } else {
-        localStorage.setItem(LS_KEYS.POINTS, points);
-      }
-    }
-
-    document.addEventListener('DOMContentLoaded', () => {
-      initUI();
-      // Начальная загрузка: если нет пользователя в кеше Firebase,
-      // onAuthStateChanged сработает с null и загрузит LocalStorage.
-      console.log('🚀 Neuron Study (Offline Ready) запущен!');
-    });
   </script>
 </body>
 </html>
