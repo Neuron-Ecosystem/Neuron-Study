@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Neuron Study - Modern Education Platform</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@500;600;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="container container-header">
+            <div class="logo">
+                <span class="logo-icon">N</span>
+                <span class="logo-text">Neuron Study</span>
+            </div>
+            <nav class="nav" id="main-nav">
+                <a href="#" class="nav-link active" data-page="home">Главная</a>
+                <a href="#" class="nav-link" data-page="courses" id="nav-my-courses" style="display: none;">Мои
+                    курсы</a>
+                <a href="#" class="nav-link" data-page="admin" id="nav-admin" style="display: none;">Админ-панель</a>
+                <div class="auth-buttons" id="auth-buttons">
+                    <button class="btn btn-primary" id="btn-login-trigger">Войти</button>
+                </div>
+                <div class="user-profile" id="user-profile" style="display: none;">
+                    <span id="user-email" class="user-email"></span>
+                    <button class="btn btn-outline" id="btn-logout">
+                        <span class="btn-text">Выйти</span>
+                    </button>
+                </div>
+                <button id="theme-toggle" class="theme-toggle-btn" title="Переключить тему">
+                    <span id="theme-icon">🌙</span>
+                </button>
+            </nav>
+        </div>
+    </header>
+
+    <!-- App Container -->
+    <main class="main-content container">
+        <!-- Hero Section (Visible on Home) -->
+        <section id="page-home" class="page active">
+            <div class="hero">
+                <h1>Развивайте свои навыки с <span class="gradient-text">Neuron Study</span></h1>
+                <p>Осваивайте новое с нашими курсами премиум-класса от экспертов индустрии.</p>
+            </div>
+            <div class="course-grid" id="course-grid">
+                <!-- Courses will be loaded here -->
+                <div class="loader">Загрузка курсов...</div>
+            </div>
+        </section>
+
+        <!-- My Courses Section -->
+        <section id="page-courses" class="page">
+            <div class="hero">
+                <h2>Моё <span class="gradient-text">обучение</span></h2>
+                <p>Продолжите занятия с того места, где остановились.</p>
+            </div>
+            <div class="course-grid" id="my-courses-grid">
+                <!-- User's courses will be loaded here -->
+                <div class="loader">Загрузка ваших курсов...</div>
+            </div>
+        </section>
+
+        <!-- Course Details Page -->
+        <section id="page-course-details" class="page">
+            <button class="btn btn-back" onclick="app.showPage('home')">← К списку курсов</button>
+            <div id="course-content-viewer">
+                <!-- Course content will be loaded here -->
+            </div>
+        </section>
+
+        <!-- Admin Page -->
+        <section id="page-admin" class="page">
+            <h2>Панель администратора</h2>
+            <div class="admin-grid">
+                <div class="admin-card">
+                    <h3>Создать новый курс</h3>
+                    <form id="form-add-course" class="admin-form">
+                        <div class="form-group">
+                            <label>Название курса</label>
+                            <input type="text" id="course-title" placeholder="например, Продвинутый JavaScript"
+                                required>
+                        </div>
+                        <div class="form-group">
+                            <label>URL курса (slug)</label>
+                            <input type="text" id="course-slug" placeholder="например, js-masterclass" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Краткое описание (карточка)</label>
+                            <textarea id="course-description" placeholder="Для карточки в списке..."
+                                required></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label>Основной текст курса (виден после начала)</label>
+                            <textarea id="course-main-text" class="large-textarea"
+                                placeholder="Подробное описание, которое увидят студенты..."></textarea>
+                            <div class="hint">Добавить изображение в основной текст: <input type="file"
+                                    id="main-text-image" accept="image/*"></div>
+                        </div>
+                        <div class="form-group">
+                            <label>Обложка</label>
+                            <div class="file-upload-wrapper">
+                                <input type="file" id="course-cover-file" accept="image/*">
+                                <input type="hidden" id="course-cover-url">
+                                <div id="cover-preview" class="image-preview"></div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Цена (₽)</label>
+                            <input type="number" id="course-price" value="0" min="0" required>
+                            <small>Установите 0 для бесплатных курсов</small>
+                        </div>
+
+                        <div class="inline-sections-manager">
+                            <h4>Разделы курса</h4>
+                            <div id="temp-sections-list" class="admin-list">
+                                <!-- Temporary sections display here -->
+                            </div>
+                            <div class="add-section-mini">
+                                <input type="text" id="mini-section-title" placeholder="Заголовок раздела">
+                                <textarea id="mini-section-content" placeholder="Контент..."></textarea>
+                                <div class="form-group">
+                                    <label>Добавить изображение</label>
+                                    <input type="file" id="mini-section-image" accept="image/*">
+                                </div>
+                                <button type="button" class="btn btn-outline btn-sm"
+                                    onclick="app.addTempSection()">Добавить раздел</button>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary btn-block" style="margin-top: 20px;">Создать курс
+                            целиком</button>
+                    </form>
+                </div>
+
+                <div class="admin-card">
+                    <h3>Управление курсами</h3>
+                    <div id="admin-courses-list" class="admin-list">
+                        <!-- Admin list of courses -->
+                    </div>
+                </div>
+
+                <!-- Section Editor (Visible when editing a course) -->
+                <div id="section-editor-container" class="admin-card full-width" style="display: none;">
+                    <h3>Управление секциями для: <span id="current-edit-course-title"></span></h3>
+                    <form id="form-add-section" class="admin-form">
+                        <div class="form-group">
+                            <label>Название секции</label>
+                            <input type="text" id="section-title" placeholder="например, Введение" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Контент (поддержка Markdown/HTML)</label>
+                            <textarea id="section-content" class="large-textarea" placeholder="Детальное содержание..."
+                                required></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label>Добавить изображение в текст</label>
+                            <input type="file" id="section-image-file" accept="image/*">
+                            <p class="hint">Загрузите файл, чтобы получить URL для вставки в контент</p>
+                        </div>
+                        <button type="submit" class="btn btn-primary" id="btn-save-section">Добавить секцию</button>
+                    </form>
+                    <div id="sections-list" class="sections-sortable">
+                        <!-- Sections will be listed here -->
+                    </div>
+                </div>
+
+                <div class="admin-card full-width">
+                    <h3>Прогресс пользователей</h3>
+                    <div id="admin-users-list" class="admin-list">
+                        <!-- User progress overview -->
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Auth Modal -->
+    <div class="modal" id="auth-modal">
+        <div class="modal-content">
+            <button class="close-modal">&times;</button>
+            <div class="auth-tabs">
+                <div class="auth-toggle-wrapper">
+                    <input type="checkbox" id="auth-toggle-checkbox" class="toggle-checkbox">
+                    <label for="auth-toggle-checkbox" class="toggle-label">
+                        <span class="toggle-text login-text">Вход</span>
+                        <span class="toggle-text register-text">Регистрация</span>
+                        <div class="toggle-slider"></div>
+                    </label>
+                </div>
+            </div>
+
+            <form id="auth-form" class="auth-form">
+                <div id="register-fields" style="display: none;">
+                    <div class="form-group">
+                        <label>Ваше имя</label>
+                        <input type="text" id="auth-name" placeholder="Иван Иванов">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Email адрес</label>
+                    <input type="email" id="auth-email" placeholder="email@example.com" required>
+                </div>
+                <div class="form-group">
+                    <label>Пароль</label>
+                    <input type="password" id="auth-password" placeholder="••••••••" required>
+                </div>
+                <button type="submit" class="btn btn-primary btn-block" id="btn-auth-submit">Войти</button>
+
+                <div class="divider">
+                    <span>ИЛИ</span>
+                </div>
+
+                <button type="button" class="btn btn-google btn-block" id="btn-google-auth">
+                    <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google">
+                    Продолжить через Google
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Notification system -->
+    <div id="notification-container" class="notification-container"></div>
+
+    <!-- Firebase Scripts -->
+    <script type="module" src="app.js"></script>
+</body>
+
+</html>

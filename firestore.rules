@@ -1,0 +1,25 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Helper function to check if user is admin
+    function isAdmin() {
+      return request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
+    }
+
+    // Users collection
+    match /users/{userId} {
+      // Users can read and write their own profile
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+      // Admins can read all user profiles (for progress overview)
+      allow read: if isAdmin();
+    }
+
+    // Courses collection
+    match /courses/{courseId} {
+      // Anyone can read course descriptions and list
+      allow read: if true;
+      // Only admins can create, update or delete courses
+      allow write: if isAdmin();
+    }
+  }
+}
